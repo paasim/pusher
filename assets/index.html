@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Pushes</title>
+  <meta charset="utf-8">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <link rel="icon" href="/push.svg" />
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+  <script src="/script.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>Pushes</h1>
+  </header>
+  <hr />
+  <main>
+    <button id="register" onclick="registerServiceWorker()">register</button>
+    <button id="unregister" onclick="unregisterServiceWorker()">unregister</button>
+    <button id="subscribe" onclick="subscribeToPush()">subscribe</button>
+    <button id="unsubscribe" onclick="unsubscribeFromPush()">unsubscribe</button>
+
+    <noscript>
+      <p>this site requires js my dude</p>
+    </noscript>
+  </main>
+</body>
+
+</html>

@@ -1,0 +1,34 @@
+:root {
+  --primary-color-dark: #006F45;
+  --primary-color-light: #5e5554;
+}
+
+body {
+  background-color: #000;
+}
+
+* {
+  color: var(--primary-color-dark);
+  font-family: monospace;
+  font-size: 48px;
+}
+
+h1 {
+  text-align: center;
+}
+
+button {
+  background-color: #000;
+  border-style: none;
+  color: var(--primary-color-light);
+  height: 100px;
+  margin-left: 4%;
+  margin-right: 4%;
+  text-align: center;
+  width: 40%;
+}
+
+button:enabled {
+  color: var(--primary-color-dark);
+  cursor: pointer;
+}
