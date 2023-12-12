@@ -15,10 +15,10 @@ dev: .env subscriptions.db
 	cargo run
 
 gen-keys:
-	cargo run -r --bin gen-keys
+	cargo run --bin gen-keys
 
 .env:
-	cargo run -r --bin gen-keys > .env
+	cargo run --bin gen-keys > .env
 	echo 'VAPID_SUBJECT=mailto:pusher-test@test.pusher' >> .env
 	echo 'DATABASE_URL=sqlite:subscriptions.db' >> .env
 	echo 'PORT=3000' >> .env
@@ -34,10 +34,10 @@ migrate:
 	sqlx migrate run
 
 send-test: .env subscriptions.db
-	cargo run -r --bin send -- --title "test title" --body "this is the body"
+	cargo run --bin send -- --title "test title" --body "this is the body"
 
 subscriptions.db:
 	sqlx database create
 
 test:
-	cargo test -r
+	cargo test
