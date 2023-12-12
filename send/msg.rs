@@ -21,10 +21,14 @@ impl Serialize for Msg {
         #[derive(Serialize)]
         pub struct MsgOpt<'a> {
             body: &'a str,
+            icon: &'static str,
         }
         let raw = MsgRaw {
             title: &self.title,
-            options: MsgOpt { body: &self.body },
+            options: MsgOpt {
+                body: &self.body,
+                icon: "push-small.png",
+            },
         };
         raw.serialize(serializer)
     }
@@ -75,9 +79,9 @@ mod tests {
         };
         let content = Vec::try_from(msg).unwrap();
 
-        let content_exp1 = r#"{"title":"title 1","options":{"body":"this is a body"}}"#.as_bytes();
-        let content_exp2 = r#"{"options":{"body":"this is a body"},"title":"title 1"}"#.as_bytes();
-
-        assert!(&content == content_exp1 || &content == content_exp2)
+        let content_exp1 =
+            r#"{"title":"title 1","options":{"body":"this is a body","icon":"push-small.png"}}"#
+                .as_bytes();
+        assert!(&content == content_exp1)
     }
 }

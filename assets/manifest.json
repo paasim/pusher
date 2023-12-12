@@ -8,6 +8,21 @@
     { "src": "push.svg",
       "sizes": "any",
       "type": "image/svg+xml"
+    },
+    {
+      "src": "push-tiny.png",
+      "sizes": "76x76",
+      "purpose": "maskable"
+    },
+    {
+      "src": "push-small.png",
+      "sizes": "256x256",
+      "purpose": "maskable"
+    },
+    {
+      "src": "push-large.png",
+      "sizes": "1024x1024",
+      "purpose": "maskable"
     }
   ]
 }
