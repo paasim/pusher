@@ -22,13 +22,13 @@ pub async fn run(
     pubkey: vapid::PublicKey,
     addr: SocketAddr,
     encryption_key: [u8; 16],
-    db_url: &str,
+    db_path: &str,
 ) -> Res<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(Level::INFO)
         .init();
 
-    let pool = get_pool(db_url, false).await?;
+    let pool = get_pool(db_path, false).await?;
 
     let trace = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

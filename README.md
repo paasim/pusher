@@ -33,7 +33,7 @@ make gen-keys
 A simple http-server that allows clients to register for push-notifications. The registrations are stored in `sqlite` database. The server also expects the following environment variables to be defined:
 * `VAPID_PUBLIC_KEY`, for server authentication.
 * `DATABASE_ENCRYPTION_KEY`: Used for encrypting client authentication secret.
-* `DATABASE_URL`: location of the `sqlite`-database.
+* `DATABASE_PATH`: location of the `sqlite`-database.
 * `PORT`: port the server listens to.
 
 These can also be automatically generaterated with `make .env` (subject will be incorrect, however). In addition, the server also needs `static` and `migrations` to exist to run. Usage:
@@ -51,7 +51,7 @@ The prerequisites are also auto-generated and the server is run with with `make 
 An utility to send push messages. Expects the following environment variables to be defined:
 * `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`: for server authentication.
 * `DATABASE_ENCRYPTION_KEY`: Used for decrypting client authentication secret.
-* `DATABASE_URL`: location of the `sqlite`-database.
+* `DATABASE_PATH`: location of the `sqlite`-database.
 
 Currenly this simply sends the same messages to all the subscribed clients. Usage:
 
