@@ -1,23 +1,23 @@
 [package]
 name = "pusher"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
-default-run = "server"
+default-run = "push-server"
 
 [lib]
 name = "pusher"
 path = "src/lib.rs"
 
 [[bin]]
-name = "server"
+name = "push-server"
 path = "server/main.rs"
 
 [[bin]]
-name = "gen-keys"
+name = "push-keygen"
 path = "gen-keys/main.rs"
 
 [[bin]]
-name = "send"
+name = "push-send"
 path = "send/main.rs"
 
 [dependencies]
