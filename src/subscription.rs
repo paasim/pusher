@@ -82,7 +82,7 @@ pub async fn unsubscribe(
     Json(sub): Json<Subscription>,
 ) -> Res<StatusCode> {
     tracing::info!("UNSUBSCRIBE {}", sub.endpoint());
-    delete_subscription(&pool, &sub.endpoint()).await?;
+    delete_subscription(&pool, sub.endpoint()).await?;
     Ok(StatusCode::OK)
 }
 

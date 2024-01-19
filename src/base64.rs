@@ -33,7 +33,7 @@ mod tests {
     fn base64url_decode_is_inverse_of_encode() {
         let plaintext = b"encode and decode are inverses of each other";
         let encoded = base64url_encode(plaintext);
-        let decoded = base64url_decode(&encoded);
+        let decoded = base64url_decode(encoded);
         assert_eq!(plaintext, decoded.unwrap().as_slice());
     }
 

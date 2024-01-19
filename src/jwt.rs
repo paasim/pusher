@@ -44,7 +44,7 @@ fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Res<Str
     let payload = serde_json::to_string(payload).map(|p| base64url_encode(p.as_bytes()))?;
     let data = [header, payload].join(".");
     let sig = key.sign(data.as_bytes())?;
-    Ok([data, base64url_encode(&sig)].join("."))
+    Ok([data, base64url_encode(sig)].join("."))
 }
 
 pub fn mk_jwt(audience: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Res<String> {
