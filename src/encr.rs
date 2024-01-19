@@ -26,7 +26,7 @@ pub fn gen_salt<const N: usize>() -> Res<[u8; N]> {
 
 pub fn aes_gcm_encrypt(data: &[u8], key: &[u8; 16], iv: &[u8; 12]) -> Res<(Vec<u8>, [u8; 16])> {
     let mut tag = [0; 16];
-    let encr = encrypt_aead(Cipher::aes_128_gcm(), key, Some(iv), &[], &data, &mut tag)?;
+    let encr = encrypt_aead(Cipher::aes_128_gcm(), key, Some(iv), &[], data, &mut tag)?;
     Ok((encr, tag))
 }
 
@@ -84,6 +84,6 @@ mod tests {
         let (encr, tag) = aes_gcm_encrypt(&plain, &cek, &nonce).unwrap();
 
         let encr = [encr, tag.to_vec()].concat();
-        assert_eq!(base64url_encode(&encr), encr_exp);
+        assert_eq!(base64url_encode(encr), encr_exp);
     }
 }

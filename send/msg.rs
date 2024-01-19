@@ -82,6 +82,6 @@ mod tests {
         let content_exp1 =
             r#"{"title":"title 1","options":{"body":"this is a body","icon":"push-small.png"}}"#
                 .as_bytes();
-        assert!(&content == content_exp1)
+        assert!(content == content_exp1)
     }
 }

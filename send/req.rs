@@ -69,6 +69,8 @@ pub async fn send_notification(
     Ok(req.send().await?)
 }
 
+type Resp = Result<String, reqwest::Error>;
+
 #[tokio::main]
 pub async fn send_notifications(
     database_url: &str,
@@ -76,11 +78,11 @@ pub async fn send_notifications(
     content: &[u8],
     ttl: usize,
     encryption_key: &[u8; 16],
-) -> Res<Vec<(Url, StatusCode, Result<String, reqwest::Error>)>> {
+) -> Res<Vec<(Url, StatusCode, Resp)>> {
     let pool = get_pool(database_url, true).await?;
     let mut res = vec![];
-    for sub in get_subscriptions(&pool, &encryption_key).await? {
-        let resp = send_notification(&sub, &vapid, content, ttl).await?;
+    for sub in get_subscriptions(&pool, encryption_key).await? {
+        let resp = send_notification(&sub, vapid, content, ttl).await?;
         res.push((sub.endpoint().clone(), resp.status(), resp.text().await));
     }
     Ok(res)

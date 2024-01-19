@@ -122,7 +122,7 @@ impl axum::response::IntoResponse for PusherError {
         tracing::error!("{}", self);
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong"),
+            "Something went wrong".to_string(),
         )
             .into_response()
     }

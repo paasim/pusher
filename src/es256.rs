@@ -44,7 +44,7 @@ impl TryFrom<&[u8]> for Es256Pub {
     fn try_from(public_key: &[u8]) -> Res<Self> {
         let grp = get_grp()?;
         let mut ctx = BigNumContext::new()?;
-        let pub_point = EcPoint::from_bytes(&grp, &public_key, &mut ctx)?;
+        let pub_point = EcPoint::from_bytes(&grp, public_key, &mut ctx)?;
         let key = EcKey::from_public_key(&grp, &pub_point)?;
         Ok(Self { key })
     }
@@ -57,7 +57,7 @@ impl TryFrom<&Es256Pub> for Vec<u8> {
         let mut ctx = BigNumContext::new()?;
         let grp = es_pub.key.group();
         let pub_key = es_pub.key.public_key();
-        Ok(pub_key.to_bytes(&grp, PointConversionForm::UNCOMPRESSED, &mut ctx)?)
+        Ok(pub_key.to_bytes(grp, PointConversionForm::UNCOMPRESSED, &mut ctx)?)
     }
 }
 
@@ -89,7 +89,7 @@ impl Es256 {
     ) -> Res<Vec<u8>> {
         let self_pub = Es256Pub::try_from(self)?;
         let key_info = self_pub.key_info(peer_pubkey)?;
-        let ecdh_secret = self.derive_ecdh_secret(&peer_pubkey)?;
+        let ecdh_secret = self.derive_ecdh_secret(peer_pubkey)?;
         let prk_key = hmac_sha256(auth_secret, &ecdh_secret)?;
         let ikm = hmac_sha256(&prk_key, &[key_info.as_slice(), &[1]].concat())?;
         hmac_sha256(salt, &ikm)
@@ -137,9 +137,9 @@ impl TryFrom<(&[u8], &[u8])> for Es256 {
 
     fn try_from((private_key, public_key): (&[u8], &[u8])) -> Res<Self> {
         let grp = get_grp()?;
-        let private_num = BigNum::from_slice(&private_key)?;
+        let private_num = BigNum::from_slice(private_key)?;
         let mut ctx = BigNumContext::new()?;
-        let pub_point = EcPoint::from_bytes(&grp, &public_key, &mut ctx)?;
+        let pub_point = EcPoint::from_bytes(&grp, public_key, &mut ctx)?;
         let key = EcKey::from_private_components(&grp, &private_num, &pub_point)?;
         Ok(Self { key })
     }
