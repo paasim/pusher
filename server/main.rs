@@ -14,15 +14,15 @@ fn get_conf() -> Res<(PublicKey, SocketAddr, [u8; 16], String)> {
     let encryption_key = get_var("DATABASE_ENCRYPTION_KEY")
         .and_then(base64url_decode)
         .and_then(to_array)?;
-    let db_url = get_var("DATABASE_URL")?;
-    Ok((pubkey, addr, encryption_key, db_url))
+    let db_path = get_var("DATABASE_PATH")?;
+    Ok((pubkey, addr, encryption_key, db_path))
 }
 
 fn main() -> Res<()> {
-    let (pubkey, addr, encryption_key, db_url) = get_conf().unwrap_or_else(|e| {
+    let (pubkey, addr, encryption_key, db_path) = get_conf().unwrap_or_else(|e| {
         eprintln!("{}", e);
         std::process::exit(1)
     });
 
-    server::run(pubkey, addr, encryption_key, &db_url)
+    server::run(pubkey, addr, encryption_key, &db_path)
 }

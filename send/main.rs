@@ -12,19 +12,19 @@ fn get_conf() -> Res<([u8; 16], String, VapidConfig, Vec<u8>)> {
     let encryption_key = get_var("DATABASE_ENCRYPTION_KEY")
         .and_then(base64url_decode)
         .and_then(to_array)?;
-    let database_url = get_var("DATABASE_URL")?;
+    let database_path = get_var("DATABASE_PATH")?;
     let vapid = VapidConfig::from_env()?;
     let content = Msg::try_from(args()).and_then(Vec::try_from)?;
-    Ok((encryption_key, database_url, vapid, content))
+    Ok((encryption_key, database_path, vapid, content))
 }
 
 fn main() -> Res<()> {
-    let (encryption_key, database_url, vapid, content) = get_conf().unwrap_or_else(|e| {
+    let (encryption_key, database_path, vapid, content) = get_conf().unwrap_or_else(|e| {
         eprintln!("{}", e);
         std::process::exit(1)
     });
 
-    let res = send_notifications(&database_url, &vapid, &content, 10, &encryption_key);
+    let res = send_notifications(&database_path, &vapid, &content, 10, &encryption_key);
     for (url, status_code, body) in res? {
         println!("Push to {}", url);
         println!("  with status code {}", status_code);
