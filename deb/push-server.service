@@ -1,0 +1,11 @@
+[Unit]
+Description=push server
+
+[Service]
+Restart=on-failure
+EnvironmentFile=/etc/pusher/push-server.conf
+ExecStart=/usr/bin/push-server
+WorkingDirectory=/usr/share/pusher
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+Package: pusher
+Version: x.y.z
+Section: utils
+Priority: optional
+Maintainer: Markus Paasiniemi <paasim@iki.fi>
+Homepage: https://github.com/paasim/auth2
+Architecture: amd64
+Depends: libc6, openssl
+Description: Functionality to register for and send push notifications
+ Contains three binaries. One that functions as a server listening for web
+ push subscriptions and another for sending encrypted messages as push
+ notifictaions to all registered clients. The third binary is only for
+ generating the VAPID keys.

@@ -1,0 +1,23 @@
+.TH PUSH-SERVER 7
+.SH NAME
+push-server \- register subscriptions to push notifications.
+.SH SYNOPSIS
+.B push-server
+.SH DESCRIPTION
+.P
+A simple http-server that allows clients to register for push-notifications. The registrations are stored in sqlite database. See
+.BR push-send (7)
+for how to send messages. The required environment variables are:
+.IP DATABASE_ENCRYPTION_KEY
+used for encrypting client authentication secret
+.IP DATABASE_URL
+location of the sqlite-database
+.IP PORT
+port the server listens to.
+.IP VAPID_PUBLIC_KEY
+public part of the VAPID key
+.P
+By default, the systemd unit defined in
+.I /lib/systemd/system/push-server.service
+reads the environment variables from
+.IR /etc/pusher/push-server.conf .

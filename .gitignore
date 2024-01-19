@@ -1,3 +1,5 @@
 /target
 .env
 subscriptions.db*
+tmp
+*.deb

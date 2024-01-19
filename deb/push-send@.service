@@ -1,0 +1,8 @@
+[Unit]
+Description=send a push message with %i
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/pusher/push-send.conf
+ExecStart=/usr/bin/push-send --title "push" --body "%i"
+WorkingDirectory=/usr/share/pusher
