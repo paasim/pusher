@@ -1,0 +1,19 @@
+.TH PUSH-KEYGEN 7
+.SH NAME
+push-keygen \- generate required keys for pusher
+.SH SYNOPSIS
+.B push-keygen
+.SH DESCRIPTION
+.P
+An utility to generate random VAPID keys and a symmetric key for encrypting client secrets in the database. The generated keys are used by
+.BR push-server (7)
+and
+.BR push-send (7).
+.P
+Generates random values for the following variables:
+.IP DATABASE_ENCRYPTION_KEY
+used for encrypting and decrypting client authentication secret
+.IP VAPID_PRIVATE_KEY
+private part of the VAPID key
+.IP VAPID_PUBLIC_KEY
+public part of the VAPID key

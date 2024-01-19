@@ -1,5 +1,7 @@
-include .env
-export
+ifneq (,$(wildcard ./.env))
+	include .env
+	export
+endif
 
 .PHONY: build clean dev gen-keys init-db install migrate send-test test
 
@@ -9,6 +11,7 @@ build:
 clean:
 	rm -rf .env
 	rm -rf subscriptions.db
+	rm -rf target
 
 dev: .env subscriptions.db
 	make init-db
@@ -18,10 +21,10 @@ gen-keys:
 	cargo run --bin gen-keys
 
 .env:
-	cargo run --bin gen-keys > .env
-	echo 'VAPID_SUBJECT=mailto:pusher-test@test.pusher' >> .env
-	echo 'DATABASE_URL=sqlite:subscriptions.db' >> .env
-	echo 'PORT=3000' >> .env
+	cp deb/push-server.conf .env
+	sed -i /VAPID_PUBLIC_KEY/d .env
+	sed -i /DATABASE_ENCRYPTION_KEY/d .env
+	cargo run --bin push-keygen >> .env
 
 init-db: subscriptions.db
 	make migrate

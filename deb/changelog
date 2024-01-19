@@ -1,0 +1,13 @@
+pusher (0.2.1) UNRELEASED; urgency=low
+  * Set up a deb package.
+  * minor fixes: create db if it does not exist, etc.
+  * prefix binary names with pusher.
+ -- Markus Paasiniemi <paasim@iki.fi>  Tue, 12 Dec 2023 08:12:30 +0200
+
+pusher (0.2.0) UNRELEASED; urgency=low
+  * Add icons and pwa meta headers
+ -- Markus Paasiniemi <paasim@iki.fi>  Tue, 12 Dec 2023 08:12:30 +0200
+
+pusher (0.1.0) UNRELEASED; urgency=low
+  * Initial release.
+ -- Markus Paasiniemi <paasim@iki.fi>  Sun, 10 Dec 2023 15:04:03 +0200

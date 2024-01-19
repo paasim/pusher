@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+if grep -q 'VAPID_PUBLIC_KEY=invalid_key' /etc/pusher/push-server.conf; then
+  echo "push-server.conf contains default values, regenerating keys"
+  for key in DATABASE_ENCRYPTION_KEY VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY; do
+    sed -i "/${key}/d" /etc/pusher/push-server.conf
+    sed -i "/${key}/d" /etc/pusher/push-send.conf
+  done
+	push-keygen >> /etc/pusher/push-send.conf
+  grep DATABASE_ENCRYPTION_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
+  grep VAPID_PUBLIC_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
+fi
