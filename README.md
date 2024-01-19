@@ -18,12 +18,12 @@ make build -r
 
 The repository consists of three different binaries:
 
-### gen-keys
+### keygen
 
-Generates [`VAPID`-keys](https://datatracker.ietf.org/doc/html/rfc8292) and salt used for encrypting client authentication secret. Usage:
+Generates [`VAPID` keys](https://datatracker.ietf.org/doc/html/rfc8292) and salt used for encrypting client authentication secret. Usage:
 
 ```bash
-./gen-keys > .env
+./push-keygen > .env
 # or without installing first
 make gen-keys
 ```
@@ -31,7 +31,7 @@ make gen-keys
 ### server
 
 A simple http-server that allows clients to register for push-notifications. The registrations are stored in `sqlite` database. The server also expects the following environment variables to be defined:
-* `VAPID_PUBLIC_KEY`, for server authentication.
+* `VAPID_PUBLIC_KEY`, public part of the VAPID key
 * `DATABASE_ENCRYPTION_KEY`: Used for encrypting client authentication secret.
 * `DATABASE_PATH`: location of the `sqlite`-database.
 * `PORT`: port the server listens to.
@@ -39,7 +39,7 @@ A simple http-server that allows clients to register for push-notifications. The
 These can also be automatically generaterated with `make .env` (subject will be incorrect, however). In addition, the server also needs `static` and `migrations` to exist to run. Usage:
 
 ```bash
-./server
+./push-server
 # or without installing first, requires sqlx-cli
 make dev
 ```
@@ -56,7 +56,7 @@ An utility to send push messages. Expects the following environment variables to
 Currenly this simply sends the same messages to all the subscribed clients. Usage:
 
 ```bash
-./send --title "the title" --body "this will be the body"
+./push-send --title "the title" --body "this will be the body"
 # or without installing first, requires sqlx-cli
 make send-test
 ```
