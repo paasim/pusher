@@ -23,7 +23,7 @@ jobs:
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create ${{ env.VERSION }}
+        run: gh release create v${{ env.VERSION }}
 
   build-release:
     name: build-release
@@ -32,14 +32,14 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x86_64, arm64]
+        arch: [amd64, arm64]
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: install dependencies and build (x86_64)
-      if: matrix.arch == 'x86_64'
+    - name: install dependencies and build (amd64)
+      if: matrix.arch == 'amd64'
       run: |
         sudo apt-get update && sudo apt-get install openssl
         cargo build --verbose --release
@@ -63,7 +63,7 @@ jobs:
     - name: Build archive
       shell: bash
       run: |
-        staging="pusher-v${{ needs.create-release.outputs.version }}-${{ matrix.arch }}"
+        staging="pusher_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}"
         mkdir -p "$staging"
         cp -r migrations assets LICENSE README.md "$staging/"
         for img in push-server push-send push-keygen; do
@@ -82,5 +82,5 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release upload ${{ needs.create-release.outputs.version }} ${{ env.ASSET }}
-        gh release upload ${{ needs.create-release.outputs.version }} ${{ env.DEB_ASSET }}
+        gh release upload v${{ needs.create-release.outputs.version }} ${{ env.ASSET }}
+        gh release upload v${{ needs.create-release.outputs.version }} ${{ env.DEB_ASSET }}

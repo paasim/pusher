@@ -3,6 +3,9 @@ Description=send a push message with %i
 
 [Service]
 Type=oneshot
+DynamicUser=yes
+User=_pusher
+Group=pusher
 EnvironmentFile=/etc/pusher/push-send.conf
 ExecStart=/usr/bin/push-send --title "push" --body "%i"
 WorkingDirectory=/usr/share/pusher

@@ -2,6 +2,11 @@
 
 set -e
 
+if ! getent group | grep -q "^pusher:" ; then
+  echo "Group 'pusher' does not exist, creating"
+  groupadd pusher
+fi
+
 if grep -q 'VAPID_PUBLIC_KEY=invalid_key' /etc/pusher/push-server.conf; then
   echo "push-server.conf contains default values, regenerating keys"
   for key in DATABASE_ENCRYPTION_KEY VAPID_PUBLIC_KEY VAPID_PRIVATE_KEY; do
@@ -12,3 +17,5 @@ if grep -q 'VAPID_PUBLIC_KEY=invalid_key' /etc/pusher/push-server.conf; then
   grep DATABASE_ENCRYPTION_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
   grep VAPID_PUBLIC_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
 fi
+
+chgrp -R pusher /etc/pusher

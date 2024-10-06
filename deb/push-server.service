@@ -2,10 +2,15 @@
 Description=push server
 
 [Service]
+DynamicUser=yes
+User=_pusher
+Group=pusher
+StateDirectory=pusher
 Restart=on-failure
 EnvironmentFile=/etc/pusher/push-server.conf
-ExecStart=/usr/bin/push-server
+ReadOnlyPaths=/usr/share/pusher
 WorkingDirectory=/usr/share/pusher
+ExecStart=/usr/bin/push-server
 
 [Install]
 WantedBy=multi-user.target

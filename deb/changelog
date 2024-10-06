@@ -1,3 +1,7 @@
+pusher (0.2.2) UNRELEASED; urgency=low
+  * Run services as dynamic user rather than root
+ -- Markus Paasiniemi <paasim@iki.fi>  Sun, 06 Oct 2024 09:37:59 +0300
+
 pusher (0.2.1) UNRELEASED; urgency=low
   * Set up a deb package.
   * minor fixes: create db if it does not exist, etc.
