@@ -1,5 +1,6 @@
 [Unit]
 Description=push server
+Requires=push-test.socket
 
 [Service]
 DynamicUser=yes
@@ -9,6 +10,7 @@ StateDirectory=pusher
 Restart=on-failure
 EnvironmentFile=/etc/pusher/push-server.conf
 ReadOnlyPaths=/usr/share/pusher
+RuntimeDirectory=pusher
 WorkingDirectory=/usr/share/pusher
 ExecStart=/usr/bin/push-server
 

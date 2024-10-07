@@ -1,0 +1,9 @@
+[Socket]
+Accept=yes
+DirectoryMode=0751
+ListenStream=/run/pusher/socket
+SocketGroup=pusher
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

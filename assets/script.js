@@ -1,6 +1,6 @@
 async function registerServiceWorker() {
   await navigator.serviceWorker.register('./sw.js');
-  await update_buttons();
+  await updateButtons();
 }
 
 async function unregisterServiceWorker() {
@@ -8,7 +8,7 @@ async function unregisterServiceWorker() {
   if (registration === undefined) return;
 
   await registration.unregister();
-  await update_buttons();
+  await updateButtons();
 }
 
 async function subscribeToPush() {
@@ -22,7 +22,7 @@ async function subscribeToPush() {
       .then(json => json.vapid_public_key)
   };
   const subscription = await registration.pushManager.subscribe(sub_data);
-  await update_buttons();
+  await updateButtons();
 
   await fetch('/subscribe', {
     method: 'POST',
@@ -40,7 +40,7 @@ async function unsubscribeFromPush() {
 
   const sub_json = subscription.toJSON();
   await subscription.unsubscribe();
-  await update_buttons();
+  await updateButtons();
 
   await fetch('/unsubscribe', {
     method: 'POST',
@@ -49,7 +49,7 @@ async function unsubscribeFromPush() {
   });
 }
 
-async function update_buttons() {
+async function updateButtons() {
   const reg_button = document.getElementById('register');
   const unreg_button = document.getElementById('unregister');
   const sub_button = document.getElementById('subscribe');
@@ -69,4 +69,8 @@ async function update_buttons() {
   unsub_button.disabled = !subscribed;
 }
 
-window.onload = update_buttons;
+async function testPush() {
+  await fetch('/test-push', { method: 'POST' });
+}
+
+window.onload = updateButtons;

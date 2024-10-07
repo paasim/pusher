@@ -3,7 +3,7 @@ ifneq (,$(wildcard ./.env))
 	export
 endif
 
-.PHONY: build clean dev gen-keys init-db install migrate send-test test
+.PHONY: build clean dev gen-keys install send-test test
 
 build:
 	cargo build -r
@@ -13,34 +13,25 @@ clean:
 	rm -rf subscriptions.db
 	rm -rf target
 
-dev: .env subscriptions.db
-	make init-db
+dev: .env
 	cargo run
 
 gen-keys:
-	cargo run --bin gen-keys
+	cargo run --bin push-keygen
 
 .env:
 	cp deb/push-server.conf .env
-	sed -i /VAPID_PUBLIC_KEY/d .env
-	sed -i /DATABASE_ENCRYPTION_KEY/d .env
+	sed -i '/VAPID_PUBLIC_KEY/d' .env
+	sed -i '/PUSH_TEST_ADDR/d' .env
+	sed -i '/DATABASE_ENCRYPTION_KEY/d' .env
+	sed -i 's/\/usr\/share\/pusher\///' .env
 	cargo run --bin push-keygen >> .env
-
-init-db: subscriptions.db
-	make migrate
-	cargo sqlx prepare
 
 install:
 	cargo install --path .
 
-migrate:
-	sqlx migrate run
-
-send-test: .env subscriptions.db
-	cargo run --bin send -- --title "test title" --body "this is the body"
-
-subscriptions.db:
-	sqlx database create
+send-test: .env
+	echo "this is the body" | cargo run --bin push-send -- --title "test title"
 
 test:
 	cargo test

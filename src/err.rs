@@ -1,10 +1,11 @@
-use std::{array, error, fmt, num, time};
+use std::{array, error, fmt, io, num, time};
 
 #[derive(Debug)]
 pub enum PusherError {
     Axum(axum::Error),
     FromSlice(array::TryFromSliceError),
     Header(reqwest::header::InvalidHeaderValue),
+    Io(io::Error),
     Migrate(sqlx::migrate::MigrateError),
     Reqwest(reqwest::Error),
     SerdeJson(serde_json::Error),
@@ -24,6 +25,7 @@ impl fmt::Display for PusherError {
             PusherError::Axum(e) => write!(f, "{}", e),
             PusherError::FromSlice(e) => write!(f, "{}", e),
             PusherError::Header(e) => write!(f, "{}", e),
+            PusherError::Io(e) => write!(f, "{}", e),
             PusherError::Migrate(e) => write!(f, "{}", e),
             PusherError::Reqwest(e) => write!(f, "{}", e),
             PusherError::SerdeJson(e) => write!(f, "{}", e),
@@ -48,6 +50,12 @@ impl From<axum::Error> for PusherError {
 impl From<array::TryFromSliceError> for PusherError {
     fn from(value: array::TryFromSliceError) -> Self {
         Self::FromSlice(value)
+    }
+}
+
+impl From<io::Error> for PusherError {
+    fn from(value: io::Error) -> Self {
+        Self::Io(value)
     }
 }
 

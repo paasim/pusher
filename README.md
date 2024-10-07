@@ -28,7 +28,7 @@ Generates [`VAPID` keys](https://datatracker.ietf.org/doc/html/rfc8292) and salt
 make gen-keys
 ```
 
-### server
+### push-server
 
 A simple http-server that allows clients to register for push-notifications. The registrations are stored in `sqlite` database. The server also expects the following environment variables to be defined:
 * `VAPID_PUBLIC_KEY`, public part of the VAPID key
@@ -40,13 +40,13 @@ These can also be automatically generaterated with `make .env` (subject will be 
 
 ```bash
 ./push-server
-# or without installing first, requires sqlx-cli
+# or
 make dev
 ```
 
-The prerequisites are also auto-generated and the server is run with with `make dev`, but this requires [`sqlx-cli`](https://github.com/launchbadge/sqlx/blob/main/sqlx-cli/README.md).
+The prerequisites are also auto-generated and the server is run with with `make dev`.
 
-### send
+### push-send
 
 An utility to send push messages. Expects the following environment variables to be defined:
 * `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`: for server authentication.
@@ -56,10 +56,19 @@ An utility to send push messages. Expects the following environment variables to
 Currenly this simply sends the same messages to all the subscribed clients. Usage:
 
 ```bash
-./push-send --title "the title" --body "this will be the body"
-# or without installing first, requires sqlx-cli
+echo "this is the body" | ./push-send --title "the title"
+# or
 make send-test
 ```
+
+#### push-test
+
+The server also has a test-button that triggers a test message. The `.deb`-package installs a systemd socket unit, that listens for a message and calls `push-send`.
+
+The socket address can be specified in the `PUSH_TEST_ADDR`-environment variable (for the server), and if let unset, a message is not triggered. Note, that for development purposes the aforementioned socket unit most likely does not exist and therefore `push-send` needs to be called manually.
+
+See `deb/push-test@.service` and `deb/push-test.socket` for details.
+
 
 ### other
 

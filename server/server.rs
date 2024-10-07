@@ -1,11 +1,11 @@
-use crate::vapid;
+use crate::trigger_push::write_to_socket;
+use crate::{vapid, Config};
 use axum::response::{Redirect, Response};
 use axum::routing::{get, post};
 use axum::Server;
 use pusher::db::get_pool;
 use pusher::err::{PusherError, Res};
 use pusher::subscription::{subscribe, unsubscribe};
-use std::net::SocketAddr;
 use tower_http::services::ServeDir;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::Level;
@@ -18,34 +18,32 @@ fn log_status<B, D, S>(response: &Response<B>, _latency: D, _span: &S) {
 }
 
 #[tokio::main]
-pub async fn run(
-    pubkey: vapid::PublicKey,
-    addr: SocketAddr,
-    encryption_key: [u8; 16],
-    db_path: &str,
-) -> Res<()> {
+pub async fn run(conf: Config) -> Res<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(Level::INFO)
         .init();
 
-    let pool = get_pool(db_path, false).await?;
+    let pool = get_pool(&conf.db_path, false).await?;
 
     let trace = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
         .on_response(log_status);
+    let tmp_path = conf.push_test_addr.map(|s| s.into());
 
     let app = axum::Router::new()
         .nest("/vapid", vapid::router())
-        .with_state(pubkey)
+        .with_state(conf.pubkey)
         .route("/subscribe", post(subscribe))
         .route("/unsubscribe", post(unsubscribe))
-        .with_state((pool, encryption_key))
+        .with_state((pool, conf.encryption_key))
+        .route("/test-push", post(write_to_socket))
+        .with_state(tmp_path)
         .route("/", get(Redirect::to("/index.html")))
         .fallback_service(ServeDir::new("assets"))
         .layer(trace);
 
-    tracing::info!("listening on {}", addr);
-    Server::bind(&addr)
+    tracing::info!("listening on {}", conf.listen_addr);
+    Server::bind(&conf.listen_addr)
         .serve(app.into_make_service())
         .await
         .map_err(|e| PusherError::from(e.to_string()))

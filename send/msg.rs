@@ -1,6 +1,8 @@
-use pusher::err::PusherError;
+use pusher::err::{PusherError, Res};
 use serde::Serialize;
-use std::env;
+use std::env::args;
+use std::io;
+use std::io::Read;
 
 #[derive(Debug)]
 pub struct Msg {
@@ -34,28 +36,18 @@ impl Serialize for Msg {
     }
 }
 
-impl TryFrom<env::Args> for Msg {
-    type Error = PusherError;
-
-    fn try_from(mut args: env::Args) -> Result<Self, Self::Error> {
-        let mut title = None;
-        let mut body = None;
-        args.next();
-        while let Some(arg) = args.next() {
-            match arg.as_str() {
-                "--title" => {
-                    title = Some(args.next().ok_or("title expected after --title")?);
-                }
-                "--body" => {
-                    body = Some(args.next().ok_or("body expected after --body")?);
-                }
-                s => Err(format!("saw {}, expected --title or --body", s))?,
-            }
-        }
-        Ok(Msg {
-            title: title.ok_or("title missing")?,
-            body: body.ok_or("body missing")?,
-        })
+impl Msg {
+    pub fn read() -> Res<Self> {
+        let mut args = args();
+        let progname = args.next().ok_or("invalid args")?;
+        let title = match args.next().as_deref() {
+            Some("--title") => args.next().ok_or("title expected after --title")?,
+            _ => Err(format!("usage: {} --title title", progname))?,
+        };
+        let mut stdin = io::stdin();
+        let mut body = String::new();
+        stdin.read_to_string(&mut body).unwrap();
+        Ok(Msg { title, body })
     }
 }
 
