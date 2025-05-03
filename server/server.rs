@@ -2,10 +2,10 @@ use crate::trigger_push::write_to_socket;
 use crate::{vapid, Config};
 use axum::response::{Redirect, Response};
 use axum::routing::{get, post};
-use axum::Server;
 use pusher::db::get_pool;
-use pusher::err::{PusherError, Res};
+use pusher::err::Res;
 use pusher::subscription::{subscribe, unsubscribe};
+use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::Level;
@@ -43,8 +43,8 @@ pub async fn run(conf: Config) -> Res<()> {
         .layer(trace);
 
     tracing::info!("listening on {}", conf.listen_addr);
-    Server::bind(&conf.listen_addr)
-        .serve(app.into_make_service())
-        .await
-        .map_err(|e| PusherError::from(e.to_string()))
+
+    let listener = TcpListener::bind(conf.listen_addr).await?;
+    axum::serve(listener, app).await?;
+    Ok(())
 }
