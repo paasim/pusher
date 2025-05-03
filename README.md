@@ -9,9 +9,10 @@ A server listening for web push subscriptions and a [sending encrypted messages]
 The [release builds](https://github.com/paasim/pusher/releases) [link to system `openssl`](https://docs.rs/openssl/latest/openssl/), so version mismatches might occur.
 
 ```bash
-make install
 # this builds the binaries under target/release
-make build -r
+cargo build -r
+
+cargo install --path .
 ```
 
 ## structure
@@ -41,10 +42,10 @@ These can also be automatically generaterated with `make .env` (subject will be 
 ```bash
 ./push-server
 # or
-make dev
+make run
 ```
 
-The prerequisites are also auto-generated and the server is run with with `make dev`.
+The prerequisites are also auto-generated and the server is run with with `make run`.
 
 ### push-send
 
