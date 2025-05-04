@@ -3,7 +3,7 @@ use axum::http::StatusCode;
 use axum::routing::get;
 use axum::{Json, Router};
 use pusher::base64::{base64url_decode, base64url_encode};
-use pusher::err::{PusherError, Res};
+use pusher::err::{Error, Result};
 use pusher::es256::Es256Pub;
 use serde::Serialize;
 
@@ -13,9 +13,9 @@ pub struct PublicKey {
 }
 
 impl TryFrom<&str> for PublicKey {
-    type Error = PusherError;
+    type Error = Error;
 
-    fn try_from(key: &str) -> Res<Self> {
+    fn try_from(key: &str) -> Result<Self> {
         let vapid_public_key = base64url_decode(key)
             .and_then(|k| Es256Pub::try_from(k.as_slice()))
             .and_then(|k| Vec::try_from(&k))

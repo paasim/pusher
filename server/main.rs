@@ -1,6 +1,7 @@
 use crate::vapid::PublicKey;
 use pusher::base64::base64url_decode;
-use pusher::err::Res;
+use pusher::err::Result;
+use pusher::err_other;
 use pusher::utils::{get_var, to_array};
 use std::net::SocketAddr;
 
@@ -17,9 +18,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_env() -> Res<Self> {
+    pub fn from_env() -> Result<Self> {
         let pubkey = PublicKey::try_from(get_var("VAPID_PUBLIC_KEY")?.as_str())?;
-        let port = get_var("PORT")?.parse()?;
+        let port = err_other!(get_var("PORT")?.parse())?;
         let listen_addr = SocketAddr::from(([127, 0, 0, 1], port));
         let encryption_key = get_var("DATABASE_ENCRYPTION_KEY")
             .and_then(base64url_decode)
@@ -36,10 +37,11 @@ impl Config {
     }
 }
 
-fn main() -> Res<()> {
-    let conf = Config::from_env().unwrap_or_else(|e| {
-        eprintln!("{}", e);
-        std::process::exit(1)
-    });
-    server::run(conf)
+fn main() {
+    Config::from_env()
+        .and_then(server::run)
+        .unwrap_or_else(|e| {
+            eprintln!("{e}");
+            std::process::exit(1)
+        });
 }

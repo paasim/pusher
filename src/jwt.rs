@@ -1,6 +1,6 @@
-use crate::base64::base64url_encode;
-use crate::err::Res;
+use crate::err::Result;
 use crate::es256::Es256;
+use crate::{base64::base64url_encode, err_other};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use url::Url;
@@ -27,9 +27,9 @@ struct JwtPayload {
     sub: String,
 }
 
-fn mk_jwt_data(aud: &Url, sub: &Url, ttl_minutes: u32) -> Res<(JwtHeader, JwtPayload)> {
+fn mk_jwt_data(aud: &Url, sub: &Url, ttl_minutes: u32) -> Result<(JwtHeader, JwtPayload)> {
     let header = JwtHeader::es_256();
-    let time = SystemTime::now().duration_since(UNIX_EPOCH)?;
+    let time = err_other!(SystemTime::now().duration_since(UNIX_EPOCH))?;
     let payload = JwtPayload {
         aud: aud.to_string(),
         exp: time.as_secs() as u32 + ttl_minutes * 60,
@@ -39,7 +39,7 @@ fn mk_jwt_data(aud: &Url, sub: &Url, ttl_minutes: u32) -> Res<(JwtHeader, JwtPay
     Ok((header, payload))
 }
 
-fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Res<String> {
+fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Result<String> {
     let header = serde_json::to_string(info).map(|s| base64url_encode(s.as_bytes()))?;
     let payload = serde_json::to_string(payload).map(|p| base64url_encode(p.as_bytes()))?;
     let data = [header, payload].join(".");
@@ -47,7 +47,7 @@ fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Res<Str
     Ok([data, base64url_encode(sig)].join("."))
 }
 
-pub fn mk_jwt(audience: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Res<String> {
+pub fn mk_jwt(audience: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Result<String> {
     let (header, payload) = mk_jwt_data(audience, subject, ttl_minutes)?;
     to_signed_jwt(&header, &payload, key)
 }
@@ -57,7 +57,7 @@ pub fn mk_vapid_jwt(
     subject: &Url,
     ttl_minutes: u32,
     key: &Es256,
-) -> Res<(String, String)> {
+) -> Result<(String, String)> {
     let jwt = mk_jwt(audience, subject, ttl_minutes, key)?;
     let k = base64url_encode(key.public_key()?);
     Ok((jwt, k))

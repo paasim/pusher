@@ -1,10 +1,12 @@
 use crate::base64::base64url_decode;
 use crate::encr::{aes_gcm_decrypt, aes_gcm_encrypt, gen_salt};
-use crate::err::Res;
+use crate::err::Result;
 use crate::es256::Es256Pub;
 use crate::utils::to_array;
+use crate::{err_other, err_to_resp};
 use axum::extract::State;
 use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use deadpool_sqlite::rusqlite::Connection;
 use deadpool_sqlite::Pool;
@@ -21,7 +23,7 @@ pub struct Subscription {
 }
 
 impl<'de> Deserialize<'de> for Subscription {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
@@ -51,7 +53,10 @@ impl<'de> Deserialize<'de> for Subscription {
 }
 
 impl Subscription {
-    pub fn encrypted_auth(&self, encrytion_key: &[u8; 16]) -> Res<([u8; 12], Vec<u8>, [u8; 16])> {
+    pub fn encrypted_auth(
+        &self,
+        encrytion_key: &[u8; 16],
+    ) -> Result<([u8; 12], Vec<u8>, [u8; 16])> {
         let salt = gen_salt()?;
         let (auth_encr, tag) = aes_gcm_encrypt(&self.auth, encrytion_key, &salt)?;
         Ok((salt, auth_encr, tag))
@@ -68,7 +73,7 @@ impl Subscription {
         &self.p256dh
     }
 
-    pub fn query(conn: &Connection, key: [u8; 16]) -> Res<Vec<Self>> {
+    pub fn query(conn: &Connection, key: [u8; 16]) -> Result<Vec<Self>> {
         let mut stmt = conn.prepare(
             "SELECT endpoint, expiration_time, auth_encr, salt, tag, p256dh FROM subscription",
         )?;
@@ -77,7 +82,7 @@ impl Subscription {
         while let Some(r) = rows.next()? {
             let auth_decr = aes_gcm_decrypt(&r.get::<_, Vec<_>>(2)?, &key, &r.get(3)?, &r.get(4)?)?;
             v.push(Self {
-                endpoint: Url::parse(&r.get::<_, String>(0)?)?,
+                endpoint: err_other!(Url::parse(&r.get::<_, String>(0)?))?,
                 expiration_time: r.get(1)?,
                 auth: to_array(auth_decr)?,
                 p256dh: Es256Pub::try_from(r.get::<_, Vec<_>>(5)?.as_slice())?,
@@ -86,7 +91,7 @@ impl Subscription {
         Ok(v)
     }
 
-    pub fn delete(conn: &Connection, endpoint: &Url) -> Res<u32> {
+    pub fn delete(conn: &Connection, endpoint: &Url) -> Result<u32> {
         Ok(conn.query_row(
             "DELETE FROM subscription WHERE endpoint = (?1) RETURNING id",
             [endpoint.to_string()],
@@ -98,22 +103,22 @@ impl Subscription {
 pub async fn subscribe(
     State((pool, encryption_key)): State<(Pool, [u8; 16])>,
     Json(sub): Json<Subscription>,
-) -> Res<StatusCode> {
+) -> Response {
     tracing::info!("SUBSCRIBE {}", sub.endpoint());
-    insert_subscription(pool, &encryption_key, &sub).await?;
-    Ok(StatusCode::OK)
+    err_to_resp!(insert_subscription(pool, &encryption_key, &sub).await);
+    StatusCode::OK.into_response()
 }
 
 pub async fn unsubscribe(
     State((pool, _)): State<(Pool, [u8; 16])>,
     Json(sub): Json<Subscription>,
-) -> Res<StatusCode> {
+) -> Response {
     tracing::info!("UNSUBSCRIBE {}", sub.endpoint());
-    delete_subscription(pool, sub.endpoint()).await?;
-    Ok(StatusCode::OK)
+    err_to_resp!(delete_subscription(pool, sub.endpoint()).await);
+    StatusCode::OK.into_response()
 }
 
-pub async fn delete_subscription(pool: Pool, endpoint: &Url) -> Res<u32> {
+pub async fn delete_subscription(pool: Pool, endpoint: &Url) -> Result<u32> {
     let conn = pool.get().await?;
     let ep = endpoint.to_string();
     conn.interact(move |c| {
@@ -130,7 +135,7 @@ pub async fn insert_subscription(
     pool: Pool,
     encryption_key: &[u8; 16],
     sub: &Subscription,
-) -> Res<u32> {
+) -> Result<u32> {
     let (salt, auth_encr, tag) = sub.encrypted_auth(encryption_key)?;
     let p256dh = Vec::try_from(&sub.p256dh)?;
     let endpoint = sub.endpoint.to_string();
@@ -149,7 +154,7 @@ pub async fn insert_subscription(
     .await?
 }
 
-pub async fn get_subscriptions(pool: Pool, key: [u8; 16]) -> Res<Vec<Subscription>> {
+pub async fn get_subscriptions(pool: Pool, key: [u8; 16]) -> Result<Vec<Subscription>> {
     let conn = pool.get().await?;
     conn.interact(move |c| Subscription::query(c, key)).await?
 }

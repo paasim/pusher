@@ -1,4 +1,4 @@
-use pusher::err::{PusherError, Res};
+use pusher::err::{Error, Result};
 use serde::Serialize;
 use std::env::args;
 use std::io;
@@ -11,7 +11,7 @@ pub struct Msg {
 }
 
 impl Serialize for Msg {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -37,7 +37,7 @@ impl Serialize for Msg {
 }
 
 impl Msg {
-    pub fn read() -> Res<Self> {
+    pub fn read() -> Result<Self> {
         let mut args = args();
         let progname = args.next().ok_or("invalid args")?;
         let title = match args.next().as_deref() {
@@ -52,9 +52,9 @@ impl Msg {
 }
 
 impl TryFrom<Msg> for Vec<u8> {
-    type Error = PusherError;
+    type Error = Error;
 
-    fn try_from(msg: Msg) -> Result<Self, Self::Error> {
+    fn try_from(msg: Msg) -> Result<Self> {
         Ok(serde_json::to_string(&msg)?.as_bytes().to_vec())
     }
 }

@@ -3,7 +3,7 @@ use crate::{vapid, Config};
 use axum::response::{Redirect, Response};
 use axum::routing::{get, post};
 use pusher::db::get_pool;
-use pusher::err::Res;
+use pusher::err::Result;
 use pusher::subscription::{subscribe, unsubscribe};
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
@@ -18,7 +18,7 @@ fn log_status<B, D, S>(response: &Response<B>, _latency: D, _span: &S) {
 }
 
 #[tokio::main]
-pub async fn run(conf: Config) -> Res<()> {
+pub async fn run(conf: Config) -> Result<()> {
     tracing_subscriber::fmt::fmt()
         .with_max_level(Level::INFO)
         .init();

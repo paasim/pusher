@@ -1,4 +1,4 @@
-use crate::err::Res;
+use crate::err::Result;
 use openssl::base64::{decode_block, encode_block};
 
 pub fn base64url_encode<V: AsRef<[u8]>>(plain: V) -> String {
@@ -9,7 +9,7 @@ pub fn base64url_encode<V: AsRef<[u8]>>(plain: V) -> String {
         .to_string()
 }
 
-pub fn base64url_decode<S: AsRef<str>>(encoded: S) -> Res<Vec<u8>> {
+pub fn base64url_decode<S: AsRef<str>>(encoded: S) -> Result<Vec<u8>> {
     let mut unpadded = encoded.as_ref().replace('-', "+").replace('_', "/");
     while unpadded.len() % 4 != 0 {
         unpadded.push('=')

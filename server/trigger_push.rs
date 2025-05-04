@@ -1,23 +1,24 @@
 use axum::extract::State;
-use pusher::err::Res;
+use axum::response::{IntoResponse, Response};
+use pusher::err_to_resp;
 use reqwest::StatusCode;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::io::AsyncWriteExt;
 use tokio::net::UnixStream;
 
-pub async fn write_to_socket(State(push_test_addr): State<Option<Arc<str>>>) -> Res<StatusCode> {
+pub async fn write_to_socket(State(push_test_addr): State<Option<Arc<str>>>) -> Response {
     let Some(push_test_addr) = push_test_addr else {
         tracing::info!("Trying to write without socket addr");
-        return Ok(StatusCode::OK);
+        return StatusCode::OK.into_response();
     };
-    let mut stream = UnixStream::connect(push_test_addr.as_ref()).await?;
+    let mut stream = err_to_resp!(UnixStream::connect(push_test_addr.as_ref()).await);
 
-    let current_ts = SystemTime::now().duration_since(UNIX_EPOCH)?;
+    let current_ts = err_to_resp!(SystemTime::now().duration_since(UNIX_EPOCH));
     let msg = format!("test at {}", current_ts.as_secs());
 
-    stream.write_all(msg.as_bytes()).await?;
+    err_to_resp!(stream.write_all(msg.as_bytes()).await);
     tracing::info!("Wrote to {}", push_test_addr);
 
-    Ok(StatusCode::OK)
+    StatusCode::OK.into_response()
 }

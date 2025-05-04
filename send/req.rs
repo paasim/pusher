@@ -1,7 +1,8 @@
 use pusher::base64::base64url_encode;
 use pusher::db::get_pool;
 use pusher::encr::gen_salt;
-use pusher::err::Res;
+use pusher::err::Result;
+use pusher::err_other;
 use pusher::es256::Es256;
 use pusher::jwt::mk_vapid_jwt;
 use pusher::subscription::{get_subscriptions, Subscription};
@@ -16,15 +17,15 @@ pub struct VapidConfig {
 }
 
 impl VapidConfig {
-    pub fn from_env() -> Res<Self> {
+    pub fn from_env() -> Result<Self> {
         let public_key = get_var("VAPID_PUBLIC_KEY")?;
         let private_key = get_var("VAPID_PRIVATE_KEY")?;
-        let subject = Url::parse(&get_var("VAPID_SUBJECT")?)?;
+        let subject = err_other!(Url::parse(&get_var("VAPID_SUBJECT")?))?;
         let key = Es256::try_from((private_key.as_str(), public_key.as_str()))?;
         Ok(Self { key, subject })
     }
 
-    pub fn public_key(&self) -> Res<String> {
+    pub fn public_key(&self) -> Result<String> {
         self.key.public_key().map(base64url_encode)
     }
 }
@@ -35,7 +36,7 @@ fn construct_headers(
     vapid_pub: &str,
     len: usize,
     ttl: usize,
-) -> Res<HeaderMap> {
+) -> Result<HeaderMap> {
     let mut headers = HeaderMap::new();
     let auth = format!("vapid t={}, k={}", jwt, k);
     headers.insert(AUTHORIZATION, auth.try_into()?);
@@ -52,7 +53,7 @@ pub async fn send_notification(
     vapid: &VapidConfig,
     content: &[u8],
     ttl: usize,
-) -> Res<Response> {
+) -> Result<Response> {
     let aud = Url::parse(&sub.endpoint().origin().ascii_serialization())?;
     let (jwt, k) = mk_vapid_jwt(&aud, &vapid.subject, 10, &vapid.key)?;
 
@@ -69,7 +70,7 @@ pub async fn send_notification(
     Ok(req.send().await?)
 }
 
-type Resp = Result<String, reqwest::Error>;
+type Resp = reqwest::Result<String>;
 
 #[tokio::main]
 pub async fn send_notifications(
@@ -78,7 +79,7 @@ pub async fn send_notifications(
     content: &[u8],
     ttl: usize,
     encryption_key: [u8; 16],
-) -> Res<Vec<(Url, StatusCode, Resp)>> {
+) -> Result<Vec<(Url, StatusCode, Resp)>> {
     let pool = get_pool(database_url, true)?;
     let mut res = vec![];
     for sub in get_subscriptions(pool, encryption_key).await? {

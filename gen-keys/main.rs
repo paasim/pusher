@@ -1,9 +1,9 @@
 use pusher::base64::base64url_encode;
 use pusher::encr::gen_salt;
-use pusher::err::Res;
+use pusher::err::Result;
 use pusher::es256::Es256;
 
-fn get_conf() -> Res<(Vec<u8>, Vec<u8>, [u8; 16])> {
+fn get_conf() -> Result<(Vec<u8>, Vec<u8>, [u8; 16])> {
     let key = Es256::gen()?;
     Ok((key.public_key()?, key.private_key(), gen_salt::<16>()?))
 }
