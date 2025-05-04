@@ -30,7 +30,7 @@ pub fn aes_gcm_encrypt(data: &[u8], key: &[u8; 16], iv: &[u8; 12]) -> Res<(Vec<u
     Ok((encr, tag))
 }
 
-pub fn aes_gcm_decrypt(data: &[u8], key: &[u8], iv: &[u8], tag: &[u8; 16]) -> Res<Vec<u8>> {
+pub fn aes_gcm_decrypt(data: &[u8], key: &[u8; 16], iv: &[u8; 12], tag: &[u8; 16]) -> Res<Vec<u8>> {
     let decr = decrypt_aead(Cipher::aes_128_gcm(), key, Some(iv), &[], data, tag)?;
     Ok(decr)
 }

@@ -77,11 +77,11 @@ pub async fn send_notifications(
     vapid: &VapidConfig,
     content: &[u8],
     ttl: usize,
-    encryption_key: &[u8; 16],
+    encryption_key: [u8; 16],
 ) -> Res<Vec<(Url, StatusCode, Resp)>> {
-    let pool = get_pool(database_url, true).await?;
+    let pool = get_pool(database_url, true)?;
     let mut res = vec![];
-    for sub in get_subscriptions(&pool, encryption_key).await? {
+    for sub in get_subscriptions(pool, encryption_key).await? {
         let resp = send_notification(&sub, vapid, content, ttl).await?;
         res.push((sub.endpoint().clone(), resp.status(), resp.text().await));
     }

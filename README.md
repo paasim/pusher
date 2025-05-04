@@ -73,6 +73,7 @@ See `deb/push-test@.service` and `deb/push-test.socket` for details.
 
 ### other
 
-* `src`: all the functionality that is common among the binaries.
-* `assets`: all the client code (`script.js`, `sw.js`).
 * `arm-cross`: debian-image for cross-compiling form `arm64`.
+* `assets`: all the client code (`script.js`, `sw.js`).
+* `migrations`: migrations along with a script to run them (`migrate.sh`).
+* `src`: all the functionality that is common among the binaries.

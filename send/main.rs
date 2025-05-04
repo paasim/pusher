@@ -23,7 +23,7 @@ fn main() -> Res<()> {
         std::process::exit(1)
     });
 
-    let res = send_notifications(&database_path, &vapid, &content, 10, &encryption_key)?;
+    let res = send_notifications(&database_path, &vapid, &content, 10, encryption_key)?;
     for (url, status_code, body) in res {
         println!("Push to {}", url);
         println!("  with status code {}", status_code);

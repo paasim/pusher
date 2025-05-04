@@ -1,4 +1,4 @@
-.PHONY: check clean gen-keys run send-test
+.PHONY: check clean gen-keys migrate run send-test
 
 .env:
 	cp deb/push-server.conf .env
@@ -23,7 +23,10 @@ clean:
 gen-keys:
 	cargo run --bin push-keygen
 
-run: .env
+migrate: migrations/migrate.sh .env
+	. $< $(DATABASE_PATH)
+
+run: .env migrate
 	cargo run
 
 send-test: .env

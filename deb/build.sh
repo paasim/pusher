@@ -23,6 +23,8 @@ install -Dm644 "deb/push-send@.service" "${DEB_SRC}/lib/systemd/system/push-send
 install -Dm644 "deb/push-test@.service" "${DEB_SRC}/lib/systemd/system/push-test@.service"
 install -Dm644 "deb/push-test.socket" "${DEB_SRC}/lib/systemd/system/push-test.socket"
 install -Dm644 assets/* -t "${DEB_SRC}/usr/share/${NAME}/assets"
+install -Dm755 migrations/migrate.sh "${DEB_SRC}/usr/share/${NAME}/migrations/migrate.sh"
+install -Dm644 migrations/*.sql -t "${DEB_SRC}/usr/share/${NAME}/migrations"
 
 install -Dm644 README.md "${DEB_SRC}/usr/share/doc/${NAME}/README.md"
 install -Dm644 deb/copyright "${DEB_SRC}/usr/share/doc/${NAME}/copyright"

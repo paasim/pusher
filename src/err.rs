@@ -3,13 +3,15 @@ use std::{array, error, fmt, io, num, time};
 #[derive(Debug)]
 pub enum PusherError {
     Axum(axum::Error),
+    DeadpoolCreate(deadpool_sqlite::CreatePoolError),
+    DeadpoolInteract(deadpool_sqlite::InteractError),
+    DeadpoolPool(deadpool_sqlite::PoolError),
     FromSlice(array::TryFromSliceError),
     Header(reqwest::header::InvalidHeaderValue),
     Io(io::Error),
-    Migrate(sqlx::migrate::MigrateError),
     Reqwest(reqwest::Error),
+    Rusqlite(deadpool_sqlite::rusqlite::Error),
     SerdeJson(serde_json::Error),
-    Sqlx(sqlx::Error),
     SysTime(time::SystemTimeError),
     OpenSSL(openssl::error::ErrorStack),
     Other(String),
@@ -23,13 +25,15 @@ impl fmt::Display for PusherError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             PusherError::Axum(e) => write!(f, "{}", e),
+            PusherError::DeadpoolCreate(e) => write!(f, "{}", e),
+            PusherError::DeadpoolInteract(e) => write!(f, "{}", e),
+            PusherError::DeadpoolPool(e) => write!(f, "{}", e),
             PusherError::FromSlice(e) => write!(f, "{}", e),
             PusherError::Header(e) => write!(f, "{}", e),
             PusherError::Io(e) => write!(f, "{}", e),
-            PusherError::Migrate(e) => write!(f, "{}", e),
             PusherError::Reqwest(e) => write!(f, "{}", e),
+            PusherError::Rusqlite(e) => write!(f, "{}", e),
             PusherError::SerdeJson(e) => write!(f, "{}", e),
-            PusherError::Sqlx(e) => write!(f, "{}", e),
             PusherError::SysTime(e) => write!(f, "{}", e),
             PusherError::OpenSSL(e) => write!(f, "{}", e),
             PusherError::Other(e) => write!(f, "{}", e),
@@ -53,6 +57,24 @@ impl From<array::TryFromSliceError> for PusherError {
     }
 }
 
+impl From<deadpool_sqlite::CreatePoolError> for PusherError {
+    fn from(value: deadpool_sqlite::CreatePoolError) -> Self {
+        Self::DeadpoolCreate(value)
+    }
+}
+
+impl From<deadpool_sqlite::InteractError> for PusherError {
+    fn from(value: deadpool_sqlite::InteractError) -> Self {
+        Self::DeadpoolInteract(value)
+    }
+}
+
+impl From<deadpool_sqlite::PoolError> for PusherError {
+    fn from(value: deadpool_sqlite::PoolError) -> Self {
+        Self::DeadpoolPool(value)
+    }
+}
+
 impl From<io::Error> for PusherError {
     fn from(value: io::Error) -> Self {
         Self::Io(value)
@@ -71,9 +93,9 @@ impl From<reqwest::header::InvalidHeaderValue> for PusherError {
     }
 }
 
-impl From<sqlx::migrate::MigrateError> for PusherError {
-    fn from(value: sqlx::migrate::MigrateError) -> Self {
-        Self::Migrate(value)
+impl From<deadpool_sqlite::rusqlite::Error> for PusherError {
+    fn from(value: deadpool_sqlite::rusqlite::Error) -> Self {
+        Self::Rusqlite(value)
     }
 }
 
@@ -86,12 +108,6 @@ impl From<serde_json::Error> for PusherError {
 impl From<openssl::error::ErrorStack> for PusherError {
     fn from(value: openssl::error::ErrorStack) -> Self {
         Self::OpenSSL(value)
-    }
-}
-
-impl From<sqlx::Error> for PusherError {
-    fn from(value: sqlx::Error) -> Self {
-        Self::Sqlx(value)
     }
 }
 

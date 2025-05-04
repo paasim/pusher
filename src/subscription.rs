@@ -6,9 +6,10 @@ use crate::utils::to_array;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
+use deadpool_sqlite::rusqlite::Connection;
+use deadpool_sqlite::Pool;
 use serde::de::Error;
 use serde::Deserialize;
-use sqlx::{query, query_as, SqlitePool};
 use url::Url;
 
 #[derive(Debug)]
@@ -66,112 +67,89 @@ impl Subscription {
     pub fn p256dh(&self) -> &Es256Pub {
         &self.p256dh
     }
+
+    pub fn query(conn: &Connection, key: [u8; 16]) -> Res<Vec<Self>> {
+        let mut stmt = conn.prepare(
+            "SELECT endpoint, expiration_time, auth_encr, salt, tag, p256dh FROM subscription",
+        )?;
+        let mut rows = stmt.query([])?;
+        let mut v = vec![];
+        while let Some(r) = rows.next()? {
+            let auth_decr = aes_gcm_decrypt(&r.get::<_, Vec<_>>(2)?, &key, &r.get(3)?, &r.get(4)?)?;
+            v.push(Self {
+                endpoint: Url::parse(&r.get::<_, String>(0)?)?,
+                expiration_time: r.get(1)?,
+                auth: to_array(auth_decr)?,
+                p256dh: Es256Pub::try_from(r.get::<_, Vec<_>>(5)?.as_slice())?,
+            });
+        }
+        Ok(v)
+    }
+
+    pub fn delete(conn: &Connection, endpoint: &Url) -> Res<u32> {
+        Ok(conn.query_row(
+            "DELETE FROM subscription WHERE endpoint = (?1) RETURNING id",
+            [endpoint.to_string()],
+            |r| r.get(0),
+        )?)
+    }
 }
 
 pub async fn subscribe(
-    State((pool, encryption_key)): State<(SqlitePool, [u8; 16])>,
+    State((pool, encryption_key)): State<(Pool, [u8; 16])>,
     Json(sub): Json<Subscription>,
 ) -> Res<StatusCode> {
     tracing::info!("SUBSCRIBE {}", sub.endpoint());
-    insert_subscription(&pool, &encryption_key, &sub).await?;
+    insert_subscription(pool, &encryption_key, &sub).await?;
     Ok(StatusCode::OK)
 }
 
 pub async fn unsubscribe(
-    State((pool, _)): State<(SqlitePool, [u8; 16])>,
+    State((pool, _)): State<(Pool, [u8; 16])>,
     Json(sub): Json<Subscription>,
 ) -> Res<StatusCode> {
     tracing::info!("UNSUBSCRIBE {}", sub.endpoint());
-    delete_subscription(&pool, sub.endpoint()).await?;
+    delete_subscription(pool, sub.endpoint()).await?;
     Ok(StatusCode::OK)
 }
 
-#[derive(Debug, Deserialize)]
-pub struct SubscriptionRow {
-    #[allow(dead_code)]
-    id: u32,
-    endpoint: String,
-    expiration_time: Option<u32>,
-    auth_encr: Vec<u8>,
-    tag: Vec<u8>,
-    salt: Vec<u8>,
-    p256dh: Vec<u8>,
-}
-
-impl SubscriptionRow {
-    pub fn decrypt(self, decryption_key: &[u8; 16]) -> Res<Subscription> {
-        let tag = to_array(self.tag)?;
-        let auth_decr = aes_gcm_decrypt(&self.auth_encr, decryption_key, &self.salt, &tag)?;
-        Ok(Subscription {
-            endpoint: Url::parse(&self.endpoint)?,
-            expiration_time: self.expiration_time,
-            auth: to_array(auth_decr)?,
-            p256dh: Es256Pub::try_from(self.p256dh.as_slice())?,
-        })
-    }
-}
-
-pub async fn delete_subscription(pool: &SqlitePool, endpoint: &Url) -> Res<u32> {
-    let endpoint = endpoint.to_string();
-    let id_row = query!(
-        r#"
-        DELETE FROM subscription WHERE endpoint = ?
-        RETURNING id AS "id: u32""#,
-        endpoint
-    )
-    .fetch_one(pool)
-    .await?;
-    Ok(id_row.id)
+pub async fn delete_subscription(pool: Pool, endpoint: &Url) -> Res<u32> {
+    let conn = pool.get().await?;
+    let ep = endpoint.to_string();
+    conn.interact(move |c| {
+        Ok(c.query_row(
+            "DELETE FROM subscription WHERE endpoint = (?1) RETURNING id",
+            [ep],
+            |r| r.get(0),
+        )?)
+    })
+    .await?
 }
 
 pub async fn insert_subscription(
-    pool: &SqlitePool,
+    pool: Pool,
     encryption_key: &[u8; 16],
     sub: &Subscription,
 ) -> Res<u32> {
     let (salt, auth_encr, tag) = sub.encrypted_auth(encryption_key)?;
     let p256dh = Vec::try_from(&sub.p256dh)?;
-    let salt = salt.as_slice();
-    let tag = tag.as_slice();
     let endpoint = sub.endpoint.to_string();
-    let id_row = query!(
-        r#"
-        INSERT INTO subscription
+    let expiration_time = sub.expiration_time;
+    let conn = pool.get().await?;
+    conn.interact(move |c| {
+        Ok(c.query_row(
+            "INSERT INTO subscription
             (endpoint, expiration_time, auth_encr, tag, salt, p256dh)
-        VALUES
-            (?, ?, ?, ?, ?, ?)
-        RETURNING id AS "id: u32"
-        "#,
-        endpoint,
-        sub.expiration_time,
-        auth_encr,
-        tag,
-        salt,
-        p256dh,
-    )
-    .fetch_one(pool)
-    .await?;
-    Ok(id_row.id)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+        RETURNING id",
+            (endpoint, expiration_time, auth_encr, tag, salt, p256dh),
+            |r| r.get(0),
+        )?)
+    })
+    .await?
 }
 
-pub async fn get_subscriptions(pool: &SqlitePool, key: &[u8; 16]) -> Res<Vec<Subscription>> {
-    query_as!(
-        SubscriptionRow,
-        r#"
-        SELECT
-            id AS "id: u32",
-            endpoint,
-            expiration_time AS "expiration_time: u32",
-            auth_encr,
-            tag,
-            salt,
-            p256dh
-        FROM subscription
-        "#,
-    )
-    .fetch_all(pool)
-    .await?
-    .into_iter()
-    .map(|r| r.decrypt(key))
-    .collect()
+pub async fn get_subscriptions(pool: Pool, key: [u8; 16]) -> Res<Vec<Subscription>> {
+    let conn = pool.get().await?;
+    conn.interact(move |c| Subscription::query(c, key)).await?
 }

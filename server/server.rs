@@ -23,7 +23,7 @@ pub async fn run(conf: Config) -> Res<()> {
         .with_max_level(Level::INFO)
         .init();
 
-    let pool = get_pool(&conf.db_path, false).await?;
+    let pool = get_pool(&conf.db_path, false)?;
 
     let trace = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

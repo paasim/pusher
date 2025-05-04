@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -e
+set -eu
 
 if ! getent group | grep -q "^pusher:" ; then
   echo "Group 'pusher' does not exist, creating"
@@ -17,5 +17,11 @@ if grep -q 'VAPID_PUBLIC_KEY=invalid_key' /etc/pusher/push-server.conf; then
   grep DATABASE_ENCRYPTION_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
   grep VAPID_PUBLIC_KEY /etc/pusher/push-send.conf >> /etc/pusher/push-server.conf
 fi
+
+
+# run migrations
+DB_PATH=$(awk -F= '/^DATABASE_PATH=/ {print $2}' /etc/pusher/push-server.conf)
+cd /usr/share/pusher/migrations \
+  && sg pusher -c "/usr/share/pusher/migrations/migrate.sh ${DB_PATH}"
 
 chgrp -R pusher /etc/pusher
