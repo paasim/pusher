@@ -54,8 +54,7 @@ pub async fn send_notification(
     content: &[u8],
     ttl: usize,
 ) -> Result<Response> {
-    let aud = Url::parse(&sub.endpoint().origin().ascii_serialization())?;
-    let (jwt, k) = mk_vapid_jwt(&aud, &vapid.subject, 10, &vapid.key)?;
+    let (jwt, k) = mk_vapid_jwt(sub.endpoint(), &vapid.subject, 10, &vapid.key)?;
 
     let local_key = Es256::gen()?;
     let salt = gen_salt::<16>()?;

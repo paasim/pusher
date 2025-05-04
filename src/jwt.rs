@@ -27,11 +27,15 @@ struct JwtPayload {
     sub: String,
 }
 
-fn mk_jwt_data(aud: &Url, sub: &Url, ttl_minutes: u32) -> Result<(JwtHeader, JwtPayload)> {
+fn mk_jwt_data(
+    push_resource: &Url,
+    sub: &Url,
+    ttl_minutes: u32,
+) -> Result<(JwtHeader, JwtPayload)> {
     let header = JwtHeader::es_256();
     let time = err_other!(SystemTime::now().duration_since(UNIX_EPOCH))?;
     let payload = JwtPayload {
-        aud: aud.to_string(),
+        aud: push_resource.origin().ascii_serialization(),
         exp: time.as_secs() as u32 + ttl_minutes * 60,
         sub: sub.to_string(),
     };
@@ -47,18 +51,18 @@ fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Result<
     Ok([data, base64url_encode(sig)].join("."))
 }
 
-pub fn mk_jwt(audience: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Result<String> {
-    let (header, payload) = mk_jwt_data(audience, subject, ttl_minutes)?;
+pub fn mk_jwt(push_resource: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Result<String> {
+    let (header, payload) = mk_jwt_data(push_resource, subject, ttl_minutes)?;
     to_signed_jwt(&header, &payload, key)
 }
 
 pub fn mk_vapid_jwt(
-    audience: &Url,
+    push_resource: &Url,
     subject: &Url,
     ttl_minutes: u32,
     key: &Es256,
 ) -> Result<(String, String)> {
-    let jwt = mk_jwt(audience, subject, ttl_minutes, key)?;
+    let jwt = mk_jwt(push_resource, subject, ttl_minutes, key)?;
     let k = base64url_encode(key.public_key()?);
     Ok((jwt, k))
 }
