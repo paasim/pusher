@@ -1,4 +1,4 @@
-use crate::trigger_push::write_to_socket;
+use crate::trigger_push::{socket_exists, write_to_socket};
 use crate::{vapid, Config};
 use axum::response::{Redirect, Response};
 use axum::routing::{get, post};
@@ -29,6 +29,7 @@ pub async fn run(conf: Config) -> Result<()> {
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
         .on_response(log_status);
     let tmp_path = conf.push_test_addr.map(|s| s.into());
+    let tmp_path_exists = tmp_path.is_some();
 
     let app = axum::Router::new()
         .nest("/vapid", vapid::router())
@@ -36,6 +37,8 @@ pub async fn run(conf: Config) -> Result<()> {
         .route("/subscribe", post(subscribe))
         .route("/unsubscribe", post(unsubscribe))
         .with_state((pool, conf.encryption_key))
+        .route("/test-push/info", get(socket_exists))
+        .with_state(tmp_path_exists)
         .route("/test-push", post(write_to_socket))
         .with_state(tmp_path)
         .route("/", get(Redirect::to("/index.html")))

@@ -1,5 +1,6 @@
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use pusher::err_to_resp;
 use reqwest::StatusCode;
 use std::sync::Arc;
@@ -21,4 +22,13 @@ pub async fn write_to_socket(State(push_test_addr): State<Option<Arc<str>>>) -> 
     tracing::info!("Wrote to {}", push_test_addr);
 
     StatusCode::OK.into_response()
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct SocketExists {
+    exists: bool,
+}
+
+pub async fn socket_exists(State(exists): State<bool>) -> Response {
+    (StatusCode::OK, Json(SocketExists { exists })).into_response()
 }

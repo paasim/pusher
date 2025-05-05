@@ -49,11 +49,18 @@ async function unsubscribeFromPush() {
   });
 }
 
+async function checkTestPush() {
+  return await fetch('/test-push/info')
+    .then(resp => resp.json())
+    .then(json => json.exists)
+}
+
 async function updateButtons() {
   const reg_button = document.getElementById('register');
   const unreg_button = document.getElementById('unregister');
   const sub_button = document.getElementById('subscribe');
   const unsub_button = document.getElementById('unsubscribe');
+  const test_button = document.getElementById('testButton');
 
   const registration = await navigator.serviceWorker.getRegistration();
   const registered = registration !== undefined;
@@ -61,12 +68,17 @@ async function updateButtons() {
   sub_button.disabled = !registered;
   unsub_button.disabled = !registered;
   reg_button.disabled = registered;
+  test_button.disabled = !registered;
   if (!registered) return;
 
   const subscription = await registration.pushManager.getSubscription();
   const subscribed = subscription !== null;
   sub_button.disabled = subscribed;
   unsub_button.disabled = !subscribed;
+  test_button.disabled = !subscribed;
+  if (!test_button.disabled) {
+    test_button.disabled = !await checkTestPush();
+  }
 }
 
 async function testPush() {
