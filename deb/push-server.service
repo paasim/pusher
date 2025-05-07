@@ -1,6 +1,6 @@
 [Unit]
 Description=push server
-Requires=push-test.socket
+Requires=push-sender.service
 
 [Service]
 DynamicUser=yes

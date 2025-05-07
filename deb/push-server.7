@@ -17,6 +17,12 @@ port the server listens to.
 .IP VAPID_PUBLIC_KEY
 public part of the VAPID key
 .P
+In addition, if PUSH_SOCKET_ADDR is set, then the server allows for sending test
+messages to a socket specified in the environment variable. This should match
+the value set for
+.MR push-send 7 ,
+which would listen for these messages and pass them to the user.
+.P
 By default, the systemd unit defined in
 .I /lib/systemd/system/push-server.service
 reads the environment variables from

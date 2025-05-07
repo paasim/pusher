@@ -928,7 +928,7 @@ dependencies = [
 
 [[package]]
 name = "pusher"
-version = "0.4.0"
+version = "0.4.9"
 dependencies = [
  "axum",
  "deadpool-sqlite",

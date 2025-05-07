@@ -1,8 +1,11 @@
 use pusher::err::{Error, Result};
 use serde::Serialize;
-use std::env::args;
 use std::io;
 use std::io::Read;
+use tokio::io::AsyncReadExt;
+use tokio::net::UnixStream;
+
+const ICON: &str = "push-small.png";
 
 #[derive(Debug)]
 pub struct Msg {
@@ -29,7 +32,7 @@ impl Serialize for Msg {
             title: &self.title,
             options: MsgOpt {
                 body: &self.body,
-                icon: "push-small.png",
+                icon: ICON,
             },
         };
         raw.serialize(serializer)
@@ -37,17 +40,16 @@ impl Serialize for Msg {
 }
 
 impl Msg {
-    pub fn read() -> Result<Self> {
-        let mut args = args();
-        let progname = args.next().ok_or("invalid args")?;
-        let title = match args.next().as_deref() {
-            Some("--title") => args.next().ok_or("title expected after --title")?,
-            _ => Err(format!("usage: {} --title title", progname))?,
-        };
-        let mut stdin = io::stdin();
+    pub async fn from_stream(mut stream: UnixStream, title: String) -> Result<Self> {
         let mut body = String::new();
-        stdin.read_to_string(&mut body).unwrap();
-        Ok(Msg { title, body })
+        stream.read_to_string(&mut body).await?;
+        Ok(Self { title, body })
+    }
+
+    pub fn from_stdin(title: String) -> Result<Self> {
+        let mut body = String::new();
+        io::stdin().read_to_string(&mut body).unwrap();
+        Ok(Self { title, body })
     }
 }
 
@@ -71,9 +73,9 @@ mod tests {
         };
         let content = Vec::try_from(msg).unwrap();
 
-        let content_exp1 =
-            r#"{"title":"title 1","options":{"body":"this is a body","icon":"push-small.png"}}"#
-                .as_bytes();
-        assert!(content == content_exp1)
+        let content_exp1 = format!(
+            r#"{{"title":"title 1","options":{{"body":"this is a body","icon":"{ICON}"}}}}"#
+        );
+        assert!(content == content_exp1.as_bytes())
     }
 }

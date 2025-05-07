@@ -3,15 +3,20 @@
 push-send \- send push messages to registered clients
 .SH SYNOPSIS
 .B push-send
-.B \-\-title
-title
-.B \-\-body
-message
+.RI [ \-\-server ]
+.I title
 .SH DESCRIPTION
 .P
-An utility to send push messages. Sends the message to all subscribed users. The subscribed are handled by
-.BR push-server (7).
-The required environment variables are:
+An utility to send push messages with title
+.IR title .
+Supports two modes, one-time send mode (default), which reads the message body
+from stdin and a server mode (activated by
+.I \-\-server
+flag), which listens for messages from a socket.
+
+The subscriptions are handled by
+.MR push-server 7 .
+For one-time send, the required environment variables are:
 .IP DATABASE_ENCRYPTION_KEY
 used for decrypting client authentication secret
 .IP DATABASE_URL
@@ -23,8 +28,15 @@ public part of the VAPID key
 .IP VAPID_SUBJECT
 vapid subject email
 .P
-By default, the systemd unit defined in
-.I /lib/systemd/system/push-send.service
+In addition, using the server mode requires:
+.IP PUSH_SOCKET_ADDR
+Path for the socket that the server listens to. This should match the one set for
+.MR push-server 7 .
+.P
+By default, the systemd units defined in
+.I /lib/systemd/system/push-send@.service
+and
+.I /lib/systemd/system/push-sender.service
 reads the environment variables from
 .IR /etc/pusher/push-send.conf .
 .SH OPTIONS

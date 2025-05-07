@@ -1,5 +1,5 @@
+use deadpool_sqlite::Pool;
 use pusher::base64::base64url_encode;
-use pusher::db::get_pool;
 use pusher::encr::gen_salt;
 use pusher::err::Result;
 use pusher::err_other;
@@ -8,7 +8,8 @@ use pusher::jwt::mk_vapid_jwt;
 use pusher::subscription::{get_subscriptions, Subscription};
 use pusher::utils::get_var;
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_ENCODING, CONTENT_LENGTH, CONTENT_TYPE};
-use reqwest::{Client, Response, StatusCode};
+use reqwest::{Client, Response};
+use tracing::{error, info};
 use url::Url;
 
 pub struct VapidConfig {
@@ -69,21 +70,22 @@ pub async fn send_notification(
     Ok(req.send().await?)
 }
 
-type Resp = reqwest::Result<String>;
-
-#[tokio::main]
 pub async fn send_notifications(
-    database_url: &str,
+    pool: &Pool,
     vapid: &VapidConfig,
     content: &[u8],
     ttl: usize,
     encryption_key: [u8; 16],
-) -> Result<Vec<(Url, StatusCode, Resp)>> {
-    let pool = get_pool(database_url, true)?;
-    let mut res = vec![];
+) -> Result<()> {
     for sub in get_subscriptions(pool, encryption_key).await? {
         let resp = send_notification(&sub, vapid, content, ttl).await?;
-        res.push((sub.endpoint().clone(), resp.status(), resp.text().await));
+        info!("Push to {}", sub.endpoint());
+        info!("with status code {}", resp.status());
+        match resp.text().await.as_ref().map(|s| s.as_str()) {
+            Ok("") => {}
+            Ok(s) => info!("{}", s),
+            Err(e) => error!("and non-renderable response {}", e),
+        }
     }
-    Ok(res)
+    Ok(())
 }

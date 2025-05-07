@@ -36,6 +36,7 @@ A simple http-server that allows clients to register for push-notifications. The
 * `DATABASE_ENCRYPTION_KEY`: Used for encrypting client authentication secret.
 * `DATABASE_PATH`: location of the `sqlite`-database.
 * `PORT`: port the server listens to.
+* `PUSH_SOCKET_ADDR`: **optional** socket path (see [push-send](#push-send)) where test messages are sent to.
 
 These can also be automatically generaterated with `make .env` (subject will be incorrect, however). In addition, the server also needs `static` and `migrations` to exist to run. Usage:
 
@@ -54,21 +55,20 @@ An utility to send push messages. Expects the following environment variables to
 * `DATABASE_ENCRYPTION_KEY`: Used for decrypting client authentication secret.
 * `DATABASE_PATH`: location of the `sqlite`-database.
 
-Currenly this simply sends the same messages to all the subscribed clients. Usage:
+The utility supports two modes, sending one time message (which is read from stdin)
 
 ```bash
-echo "this is the body" | ./push-send --title "the title"
-# or
 make send-test
 ```
+and a server mode, listening to messages from a unix socket. In this case
+`PUSH_SOCKET_ADDR` - path to the socket - should also be set and match to the one
+set for `push-server`. This enables the test-button in the web app.
 
-#### push-test
+```bash
+make send-socket
+```
 
-The server also has a test-button that triggers a test message. The `.deb`-package installs a systemd socket unit, that listens for a message and calls `push-send`.
-
-The socket address can be specified in the `PUSH_TEST_ADDR`-environment variable (for the server), and if let unset, a message is not triggered. Note, that for development purposes the aforementioned socket unit most likely does not exist and therefore `push-send` needs to be called manually.
-
-See `deb/push-test@.service` and `deb/push-test.socket` for details.
+See `deb/push-sender.service` and `man push-send` for details.
 
 
 ### other

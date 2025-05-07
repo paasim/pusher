@@ -2,11 +2,10 @@
 Description=send a push message, body from a socket
 
 [Service]
-Type=oneshot
 DynamicUser=yes
 User=_pusher
 Group=pusher
+Restart=on-failure
 EnvironmentFile=/etc/pusher/push-send.conf
-ExecStart=/usr/bin/push-send --title test
-StandardInput=socket
-StandardOutput=journal
+RuntimeDirectory=pusher
+ExecStart=/usr/bin/push-send --server pusher

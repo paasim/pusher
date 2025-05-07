@@ -7,5 +7,5 @@ DynamicUser=yes
 User=_pusher
 Group=pusher
 EnvironmentFile=/etc/pusher/push-send.conf
-ExecStart=/usr/bin/push-send --title push
+ExecStart=/usr/bin/push-send push-message
 StandardInputText=%i

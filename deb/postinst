@@ -21,7 +21,7 @@ fi
 
 # run migrations
 DB_PATH=$(awk -F= '/^DATABASE_PATH=/ {print $2}' /etc/pusher/push-server.conf)
-cd /usr/share/pusher/migrations \
+cd /usr/share/pusher \
   && sg pusher -c "/usr/share/pusher/migrations/migrate.sh ${DB_PATH}"
 
 chgrp -R pusher /etc/pusher

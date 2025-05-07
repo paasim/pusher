@@ -20,8 +20,7 @@ for bin in push-server push-send; do
 done
 install -Dm644 "deb/push-server.service" "${DEB_SRC}/lib/systemd/system/push-server.service"
 install -Dm644 "deb/push-send@.service" "${DEB_SRC}/lib/systemd/system/push-send@.service"
-install -Dm644 "deb/push-test@.service" "${DEB_SRC}/lib/systemd/system/push-test@.service"
-install -Dm644 "deb/push-test.socket" "${DEB_SRC}/lib/systemd/system/push-test.socket"
+install -Dm644 "deb/push-sender.service" "${DEB_SRC}/lib/systemd/system/push-sender.service"
 install -Dm644 assets/* -t "${DEB_SRC}/usr/share/${NAME}/assets"
 install -Dm755 migrations/migrate.sh "${DEB_SRC}/usr/share/${NAME}/migrations/migrate.sh"
 install -Dm644 migrations/*.sql -t "${DEB_SRC}/usr/share/${NAME}/migrations"

@@ -154,7 +154,7 @@ pub async fn insert_subscription(
     .await?
 }
 
-pub async fn get_subscriptions(pool: Pool, key: [u8; 16]) -> Result<Vec<Subscription>> {
+pub async fn get_subscriptions(pool: &Pool, key: [u8; 16]) -> Result<Vec<Subscription>> {
     let conn = pool.get().await?;
     conn.interact(move |c| Subscription::query(c, key)).await?
 }

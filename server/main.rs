@@ -26,7 +26,7 @@ impl Config {
             .and_then(base64url_decode)
             .and_then(to_array)?;
         let db_path = get_var("DATABASE_PATH")?;
-        let push_test_addr = get_var("PUSH_TEST_ADDR").ok();
+        let push_test_addr = get_var("PUSH_SOCKET_ADDR").ok();
         Ok(Self {
             pubkey,
             listen_addr,
