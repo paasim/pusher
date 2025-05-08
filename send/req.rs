@@ -79,12 +79,12 @@ pub async fn send_notifications(
 ) -> Result<()> {
     for sub in get_subscriptions(pool, encryption_key).await? {
         let resp = send_notification(&sub, vapid, content, ttl).await?;
-        info!("Push to {}", sub.endpoint());
+        info!("Push to {}", sub.name());
         info!("with status code {}", resp.status());
         match resp.text().await.as_ref().map(|s| s.as_str()) {
             Ok("") => {}
-            Ok(s) => info!("{}", s),
-            Err(e) => error!("and non-renderable response {}", e),
+            Ok(s) => info!("{s}"),
+            Err(e) => error!("and non-renderable response {e}"),
         }
     }
     Ok(())

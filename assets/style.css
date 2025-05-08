@@ -1,5 +1,6 @@
 :root {
   --primary-color-dark: #006F45;
+  --primary-color-darker: #003F25;
   --primary-color-light: #5e5554;
 }
 
@@ -16,6 +17,22 @@ body {
 h1 {
   text-align: center;
 }
+
+input {
+  background-color: #000;
+  color: var(--primary-color-darker);
+  border-style: none;
+  align: center;
+  height: 100px;
+  text-align: center;
+  width: 100%;
+  margin: 0.2em 0;
+}
+
+input:focus {
+  outline: none;
+}
+
 
 button {
   background-color: #000;

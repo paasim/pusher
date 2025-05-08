@@ -18,11 +18,16 @@
   </header>
   <hr />
   <main>
-    <button id="register" onclick="registerServiceWorker()">register</button>
-    <button id="unregister" onclick="unregisterServiceWorker()">unregister</button>
-    <button id="subscribe" onclick="subscribeToPush()">subscribe</button>
-    <button id="unsubscribe" onclick="unsubscribeFromPush()">unsubscribe</button>
-    <button id="testButton" onclick="testPush()">test</button>
+    <button id="register">register</button>
+    <input
+      id="subscriptionName"
+      minLength=2
+      placeholder="subscription name"
+      type="text"
+    />
+    <button id="subscribe">subscribe</button>
+    <input id="testMessage" placeholder="message" type="text" />
+    <button id="testButton">send</button>
     <noscript>
       <p>this site requires js my dude</p>
     </noscript>

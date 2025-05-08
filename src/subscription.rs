@@ -4,7 +4,7 @@ use crate::err::Result;
 use crate::es256::Es256Pub;
 use crate::utils::to_array;
 use crate::{err_other, err_to_resp};
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
@@ -17,9 +17,15 @@ use url::Url;
 #[derive(Debug)]
 pub struct Subscription {
     endpoint: Url,
+    name: String,
     expiration_time: Option<u32>,
     auth: [u8; 16],
     p256dh: Es256Pub,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Endpoint {
+    endpoint: Url,
 }
 
 impl<'de> Deserialize<'de> for Subscription {
@@ -34,7 +40,8 @@ impl<'de> Deserialize<'de> for Subscription {
         }
         #[derive(Deserialize)]
         pub struct SubscriptionRaw {
-            endpoint: String,
+            endpoint: Url,
+            name: String,
             #[serde(rename = "expirationTime")]
             expiration_time: Option<u32>,
             keys: SubscriptionKeysRaw,
@@ -43,8 +50,9 @@ impl<'de> Deserialize<'de> for Subscription {
         let auth = base64url_decode(raw.keys.auth).and_then(to_array);
         let p256dh =
             base64url_decode(raw.keys.p256dh).and_then(|k| Es256Pub::try_from(k.as_slice()));
-        Ok(Subscription {
-            endpoint: Url::parse(&raw.endpoint).map_err(D::Error::custom)?,
+        Ok(Self {
+            endpoint: raw.endpoint,
+            name: raw.name,
             expiration_time: raw.expiration_time,
             auth: auth.map_err(D::Error::custom)?,
             p256dh: p256dh.map_err(D::Error::custom)?,
@@ -61,8 +69,13 @@ impl Subscription {
         let (auth_encr, tag) = aes_gcm_encrypt(&self.auth, encrytion_key, &salt)?;
         Ok((salt, auth_encr, tag))
     }
+
     pub fn endpoint(&self) -> &Url {
         &self.endpoint
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn auth(&self) -> &[u8; 16] {
@@ -75,28 +88,21 @@ impl Subscription {
 
     pub fn query(conn: &Connection, key: [u8; 16]) -> Result<Vec<Self>> {
         let mut stmt = conn.prepare(
-            "SELECT endpoint, expiration_time, auth_encr, salt, tag, p256dh FROM subscription",
+            "SELECT endpoint, name, expiration_time, auth_encr, salt, tag, p256dh FROM subscription",
         )?;
         let mut rows = stmt.query([])?;
         let mut v = vec![];
         while let Some(r) = rows.next()? {
-            let auth_decr = aes_gcm_decrypt(&r.get::<_, Vec<_>>(2)?, &key, &r.get(3)?, &r.get(4)?)?;
+            let auth_decr = aes_gcm_decrypt(&r.get::<_, Vec<_>>(3)?, &key, &r.get(4)?, &r.get(5)?)?;
             v.push(Self {
                 endpoint: err_other!(Url::parse(&r.get::<_, String>(0)?))?,
-                expiration_time: r.get(1)?,
+                name: r.get(1)?,
+                expiration_time: r.get(2)?,
                 auth: to_array(auth_decr)?,
-                p256dh: Es256Pub::try_from(r.get::<_, Vec<_>>(5)?.as_slice())?,
+                p256dh: Es256Pub::try_from(r.get::<_, Vec<_>>(6)?.as_slice())?,
             });
         }
         Ok(v)
-    }
-
-    pub fn delete(conn: &Connection, endpoint: &Url) -> Result<u32> {
-        Ok(conn.query_row(
-            "DELETE FROM subscription WHERE endpoint = (?1) RETURNING id",
-            [endpoint.to_string()],
-            |r| r.get(0),
-        )?)
     }
 }
 
@@ -111,10 +117,10 @@ pub async fn subscribe(
 
 pub async fn unsubscribe(
     State((pool, _)): State<(Pool, [u8; 16])>,
-    Json(sub): Json<Subscription>,
+    Query(query): Query<Endpoint>,
 ) -> Response {
-    tracing::info!("UNSUBSCRIBE {}", sub.endpoint());
-    err_to_resp!(delete_subscription(pool, sub.endpoint()).await);
+    tracing::info!("UNSUBSCRIBE {}", query.endpoint);
+    err_to_resp!(delete_subscription(pool, &query.endpoint).await);
     StatusCode::OK.into_response()
 }
 
@@ -139,15 +145,16 @@ pub async fn insert_subscription(
     let (salt, auth_encr, tag) = sub.encrypted_auth(encryption_key)?;
     let p256dh = Vec::try_from(&sub.p256dh)?;
     let endpoint = sub.endpoint.to_string();
-    let expiration_time = sub.expiration_time;
+    let name = sub.name.clone();
+    let expr = sub.expiration_time;
     let conn = pool.get().await?;
     conn.interact(move |c| {
         Ok(c.query_row(
             "INSERT INTO subscription
-            (endpoint, expiration_time, auth_encr, tag, salt, p256dh)
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-        RETURNING id",
-            (endpoint, expiration_time, auth_encr, tag, salt, p256dh),
+            (endpoint, name, expiration_time, auth_encr, tag, salt, p256dh)
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+            RETURNING id",
+            (endpoint, name, expr, auth_encr, tag, salt, p256dh),
             |r| r.get(0),
         )?)
     })

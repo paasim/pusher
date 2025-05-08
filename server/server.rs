@@ -1,7 +1,7 @@
 use crate::trigger_push::{socket_exists, write_to_socket};
 use crate::{vapid, Config};
 use axum::response::{Redirect, Response};
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use pusher::db::get_pool;
 use pusher::err::Result;
 use pusher::subscription::{subscribe, unsubscribe};
@@ -35,7 +35,7 @@ pub async fn run(conf: Config) -> Result<()> {
         .nest("/vapid", vapid::router())
         .with_state(conf.pubkey)
         .route("/subscribe", post(subscribe))
-        .route("/unsubscribe", post(unsubscribe))
+        .route("/unsubscribe", delete(unsubscribe))
         .with_state((pool, conf.encryption_key))
         .route("/test-push/info", get(socket_exists))
         .with_state(tmp_path_exists)

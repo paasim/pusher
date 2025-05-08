@@ -57,7 +57,7 @@ impl Config {
 
 fn main() {
     if let Err(e) = Config::from_env().and_then(run) {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1)
     };
 }
