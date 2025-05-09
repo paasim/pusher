@@ -1,3 +1,11 @@
+pusher (0.5.0) UNRELEASED; urgency=low
+  * Add ability to send custom test messages from the app
+  * Add names for subscriptions, note that this requires subscriptions to be
+    reactivated as the old subscriptions do not have names.
+  * Implement push-test socket directly instead of relying on systemd sockets
+  * Add a more documentation - especially function docs
+ -- Markus Paasiniemi <paasim@iki.fi>  Fri, 09 May 2025 19:07:22 +0300
+
 pusher (0.4.0) UNRELEASED; urgency=low
   * Fix audience field (esp. for Firefox) in server identification
   * Move from sqlx to deadpool and rusqlite

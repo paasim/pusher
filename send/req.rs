@@ -31,6 +31,7 @@ impl VapidConfig {
     }
 }
 
+/// Headers for the push notification query
 fn construct_headers(
     jwt: &str,
     k: &str,
@@ -49,6 +50,7 @@ fn construct_headers(
     Ok(headers)
 }
 
+/// Request for push message delivery as described in rfc8030 section 5
 pub async fn send_notification(
     sub: &Subscription,
     vapid: &VapidConfig,
@@ -70,6 +72,7 @@ pub async fn send_notification(
     Ok(req.send().await?)
 }
 
+/// [send_notification] for all the existing subscriptions from `pool` and log the results
 pub async fn send_notifications(
     pool: &Pool,
     vapid: &VapidConfig,

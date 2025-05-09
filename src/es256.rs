@@ -19,12 +19,14 @@ pub struct Es256Pub {
 }
 
 impl Es256Pub {
+    /// rfc8291 section 3.3
     pub fn key_info(&self, user_pub_key: &Self) -> Result<Vec<u8>> {
         let ua_bytes = Vec::try_from(user_pub_key)?;
         let as_bytes = Vec::try_from(self)?;
         Ok([b"WebPush: info\0", ua_bytes.as_slice(), as_bytes.as_slice()].concat())
     }
 
+    /// rfc8188 section 2.1
     pub fn mk_header(&self, salt: &[u8]) -> Result<Vec<u8>> {
         let as_bytes = Vec::try_from(self)?;
         let as_pub_len = as_bytes.len() as u8;
@@ -41,6 +43,7 @@ impl Es256Pub {
 impl TryFrom<&[u8]> for Es256Pub {
     type Error = Error;
 
+    /// Assumes the `public_key` is encoded as [EcPoint] from [Nid::X9_62_PRIME256V1]-group.
     fn try_from(public_key: &[u8]) -> Result<Self> {
         let grp = get_grp()?;
         let mut ctx = BigNumContext::new()?;
@@ -53,6 +56,7 @@ impl TryFrom<&[u8]> for Es256Pub {
 impl TryFrom<&Es256Pub> for Vec<u8> {
     type Error = Error;
 
+    /// Serializes the public key using [PointConversionForm::UNCOMPRESSED]
     fn try_from(es_pub: &Es256Pub) -> Result<Self> {
         let mut ctx = BigNumContext::new()?;
         let grp = es_pub.key.group();
@@ -81,6 +85,7 @@ impl Es256 {
         Ok(deriver.derive_to_vec()?)
     }
 
+    /// rfc8188 section 2.2
     fn mk_prk(
         &self,
         peer_pubkey: &Es256Pub,
@@ -95,6 +100,7 @@ impl Es256 {
         hmac_sha256(salt, &ikm)
     }
 
+    /// rfc8188 with `Content-Encoding: nonce` (2.3, 3.1)
     pub fn mk_content(
         &self,
         peer_pubkey: &Es256Pub,
@@ -111,11 +117,13 @@ impl Es256 {
         Ok([header, encr].concat())
     }
 
+    /// Sign the `data` with ecdsa
     pub fn sign(&self, data: &[u8]) -> Result<Vec<u8>> {
         let sig = EcdsaSig::sign(&sha256(data), &self.key)?;
         Ok([sig.r().to_vec(), sig.s().to_vec()].concat())
     }
 
+    /// Verify the signature signed with [Es256::sign]
     pub fn verify(&self, data: &[u8], sig: &[u8]) -> Result<bool> {
         let r = BigNum::from_slice(&sig[..32])?;
         let s = BigNum::from_slice(&sig[32..64])?;
@@ -135,6 +143,7 @@ impl Es256 {
 impl TryFrom<(&[u8], &[u8])> for Es256 {
     type Error = Error;
 
+    /// Assumes that the keys are provided as points at [Nid::X9_62_PRIME256V1]
     fn try_from((private_key, public_key): (&[u8], &[u8])) -> Result<Self> {
         let grp = get_grp()?;
         let private_num = BigNum::from_slice(private_key)?;
@@ -148,6 +157,7 @@ impl TryFrom<(&[u8], &[u8])> for Es256 {
 impl TryFrom<(&str, &str)> for Es256 {
     type Error = Error;
 
+    /// Assumes that the keys are [crate::base64::base64url_encode]d.
     fn try_from((private_b64url, public_b64url): (&str, &str)) -> Result<Self> {
         let private_key = base64url_decode(private_b64url)?;
         let public_key = base64url_decode(public_b64url)?;
@@ -157,6 +167,7 @@ impl TryFrom<(&str, &str)> for Es256 {
 
 impl TryFrom<&Es256> for Es256Pub {
     type Error = Error;
+
     fn try_from(full: &Es256) -> Result<Self> {
         let key = EcKey::from_public_key(full.key.group(), full.key.public_key())?;
         Ok(Self { key })

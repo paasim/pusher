@@ -40,12 +40,14 @@ impl Serialize for Msg {
 }
 
 impl Msg {
+    /// Read message body from the stream
     pub async fn from_stream(mut stream: UnixStream, title: String) -> Result<Self> {
         let mut body = String::new();
         stream.read_to_string(&mut body).await?;
         Ok(Self { title, body })
     }
 
+    /// Read message body from [io::stdin()]
     pub fn from_stdin(title: String) -> Result<Self> {
         let mut body = String::new();
         io::stdin().read_to_string(&mut body).unwrap();
@@ -56,6 +58,7 @@ impl Msg {
 impl TryFrom<Msg> for Vec<u8> {
     type Error = Error;
 
+    /// Turn the message into JSON and serialize the result as utf-8 bytes.
     fn try_from(msg: Msg) -> Result<Self> {
         Ok(serde_json::to_string(&msg)?.as_bytes().to_vec())
     }

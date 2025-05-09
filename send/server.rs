@@ -15,6 +15,8 @@ async fn get_listener(path: &Path) -> Result<UnixListener> {
     Ok(UnixListener::bind(path)?)
 }
 
+/// Listen for connections to the socket specified in [Config] and forward the socket
+/// input as a push message to all subscribed clients.
 pub async fn listen(config: Config) -> Result<()> {
     let listener = get_listener(&config.push_test_addr).await?;
     let pool = get_pool(&config.db_path, true)?;

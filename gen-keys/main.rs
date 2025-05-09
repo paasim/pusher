@@ -8,6 +8,7 @@ fn get_conf() -> Result<(Vec<u8>, Vec<u8>, [u8; 16])> {
     Ok((key.public_key()?, key.private_key(), gen_salt::<16>()?))
 }
 
+/// Generate VAPID keys as described in rfc8292.
 fn main() {
     let (pub_key, priv_key, encr_key) = get_conf().unwrap_or_else(|e| {
         eprintln!("{}", e);

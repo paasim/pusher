@@ -6,7 +6,7 @@ use openssl::rand::rand_bytes;
 use openssl::sign::Signer;
 use openssl::symm::{decrypt_aead, encrypt_aead, Cipher};
 
-// FIXME: could this somehow sometimes produce 64
+/// FIXME: could this somehow sometimes produce 64 (length off by one)
 pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
     let key = PKey::hmac(key)?;
     let dig = Signer::new(MessageDigest::sha256(), &key)?.sign_oneshot_to_vec(data)?;
@@ -24,12 +24,14 @@ pub fn gen_salt<const N: usize>() -> Result<[u8; N]> {
     Ok(buf)
 }
 
+/// 128 bit AES in GCM
 pub fn aes_gcm_encrypt(data: &[u8], key: &[u8; 16], iv: &[u8; 12]) -> Result<(Vec<u8>, [u8; 16])> {
     let mut tag = [0; 16];
     let encr = encrypt_aead(Cipher::aes_128_gcm(), key, Some(iv), &[], data, &mut tag)?;
     Ok((encr, tag))
 }
 
+/// 128 bit AES in GCM
 pub fn aes_gcm_decrypt(
     data: &[u8],
     key: &[u8; 16],

@@ -51,6 +51,7 @@ macro_rules! err_to_resp {
     };
 }
 
+/// Wraps the error with [std::io::Error::other()], which can be turned into [Error] with ?.
 #[macro_export]
 macro_rules! err_other {
     ($e:expr) => {

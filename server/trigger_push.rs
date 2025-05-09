@@ -12,6 +12,8 @@ pub struct Message {
     message: String,
 }
 
+/// Write message body into socket, so that `push-sender` can forward it as
+/// a push message. Note that this could be combined into a single binary..?
 pub async fn write_to_socket(
     State(push_test_addr): State<Option<Arc<str>>>,
     Json(msg): Json<Message>,
@@ -33,6 +35,7 @@ pub struct SocketExists {
     exists: bool,
 }
 
+/// Check if the socket exists and return it as JSON
 pub async fn socket_exists(State(exists): State<bool>) -> Response {
     (StatusCode::OK, Json(SocketExists { exists })).into_response()
 }

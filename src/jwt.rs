@@ -51,11 +51,13 @@ fn to_signed_jwt(info: &JwtHeader, payload: &JwtPayload, key: &Es256) -> Result<
     Ok([data, base64url_encode(sig)].join("."))
 }
 
+/// Returns a JWT signed with `key` as a string.
 pub fn mk_jwt(push_resource: &Url, subject: &Url, ttl_minutes: u32, key: &Es256) -> Result<String> {
     let (header, payload) = mk_jwt_data(push_resource, subject, ttl_minutes)?;
     to_signed_jwt(&header, &payload, key)
 }
 
+/// JWT as described in rfc8292
 pub fn mk_vapid_jwt(
     push_resource: &Url,
     subject: &Url,

@@ -15,6 +15,8 @@ pub struct PublicKey {
 impl TryFrom<&str> for PublicKey {
     type Error = Error;
 
+    /// Assumes the `k`-part of the public key is [base64url_encode]d
+    /// as described in rfc8292 section 3.2.
     fn try_from(key: &str) -> Result<Self> {
         let vapid_public_key = base64url_decode(key)
             .and_then(|k| Es256Pub::try_from(k.as_slice()))
@@ -28,6 +30,7 @@ pub fn router() -> Router<PublicKey> {
     Router::new().route("/pubkey", get(get_pubkey))
 }
 
+/// Return the server (VAPID) public key
 async fn get_pubkey(State(pubkey): State<PublicKey>) -> (StatusCode, Json<PublicKey>) {
     (StatusCode::OK, Json(pubkey))
 }

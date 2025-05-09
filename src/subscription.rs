@@ -15,6 +15,8 @@ use serde::Deserialize;
 use url::Url;
 
 #[derive(Debug)]
+/// [PushSubscription](https://developer.mozilla.org/en-US/docs/Web/API/PushSubscription) returned
+/// by the browser with the addition of `name`-field for subscription name.
 pub struct Subscription {
     endpoint: Url,
     name: String,
@@ -61,6 +63,8 @@ impl<'de> Deserialize<'de> for Subscription {
 }
 
 impl Subscription {
+    /// Encrypts the `auth`-field using AES-128 in GCM.
+    /// Returns the generated salt, encrypted auth and the encryption tag.
     pub fn encrypted_auth(
         &self,
         encrytion_key: &[u8; 16],
@@ -82,11 +86,12 @@ impl Subscription {
         &self.auth
     }
 
+    /// The public key of the subscription
     pub fn p256dh(&self) -> &Es256Pub {
         &self.p256dh
     }
 
-    pub fn query(conn: &Connection, key: [u8; 16]) -> Result<Vec<Self>> {
+    fn query(conn: &Connection, key: [u8; 16]) -> Result<Vec<Self>> {
         let mut stmt = conn.prepare(
             "SELECT endpoint, name, expiration_time, auth_encr, salt, tag, p256dh FROM subscription",
         )?;
@@ -106,6 +111,7 @@ impl Subscription {
     }
 }
 
+/// Insert a new subscription to the database
 pub async fn subscribe(
     State((pool, encryption_key)): State<(Pool, [u8; 16])>,
     Json(sub): Json<Subscription>,
@@ -115,6 +121,7 @@ pub async fn subscribe(
     StatusCode::OK.into_response()
 }
 
+/// Delete a subscription from the database
 pub async fn unsubscribe(
     State((pool, _)): State<(Pool, [u8; 16])>,
     Query(query): Query<Endpoint>,
@@ -124,7 +131,7 @@ pub async fn unsubscribe(
     StatusCode::OK.into_response()
 }
 
-pub async fn delete_subscription(pool: Pool, endpoint: &Url) -> Result<u32> {
+async fn delete_subscription(pool: Pool, endpoint: &Url) -> Result<u32> {
     let conn = pool.get().await?;
     let ep = endpoint.to_string();
     conn.interact(move |c| {
@@ -137,7 +144,7 @@ pub async fn delete_subscription(pool: Pool, endpoint: &Url) -> Result<u32> {
     .await?
 }
 
-pub async fn insert_subscription(
+async fn insert_subscription(
     pool: Pool,
     encryption_key: &[u8; 16],
     sub: &Subscription,
@@ -161,6 +168,7 @@ pub async fn insert_subscription(
     .await?
 }
 
+/// Query for all the [Subscription]s.
 pub async fn get_subscriptions(pool: &Pool, key: [u8; 16]) -> Result<Vec<Subscription>> {
     let conn = pool.get().await?;
     conn.interact(move |c| Subscription::query(c, key)).await?

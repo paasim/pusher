@@ -1,6 +1,7 @@
 use crate::err::Result;
 use openssl::base64::{decode_block, encode_block};
 
+/// replaces `+` with `-`, `/` with `_` and trims trailing `=`
 pub fn base64url_encode<V: AsRef<[u8]>>(plain: V) -> String {
     encode_block(plain.as_ref())
         .replace('+', "-")
@@ -9,6 +10,7 @@ pub fn base64url_encode<V: AsRef<[u8]>>(plain: V) -> String {
         .to_string()
 }
 
+/// replaces `-` with `+` and `_` with `/`. Trailing `=` are optional.
 pub fn base64url_decode<S: AsRef<str>>(encoded: S) -> Result<Vec<u8>> {
     let mut unpadded = encoded.as_ref().replace('-', "+").replace('_', "/");
     while unpadded.len() % 4 != 0 {
