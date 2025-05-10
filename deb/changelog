@@ -1,3 +1,7 @@
+pusher (0.5.1) UNRELEASED; urgency=low
+  * Fix input element centering
+ -- Markus Paasiniemi <paasim@iki.fi>  Sat, 10 May 2025 11:13:23 +0300
+
 pusher (0.5.0) UNRELEASED; urgency=low
   * Add ability to send custom test messages from the app
   * Add names for subscriptions, note that this requires subscriptions to be
